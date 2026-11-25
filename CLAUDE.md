@@ -86,11 +86,13 @@ scenario is the Northwind Outfitters support agent from that build.
   or endorsed by Anthropic.
 - The site is static and must work from GitHub Pages with no server.
 - Styling and theming follow the `ccaf-study/practice-exam` palette and fonts: CSS variables,
-  `:focus-visible` outlines, colour never the only signal, and respect for `prefers-reduced-motion`. The
-  theme follows the OS for now. An Auto/Dark/Light toggle is on the roadmap, and it must apply the saved
-  theme before first paint without an inline script (the CSP blocks those).
-- Nothing uses localStorage yet. If something does, version its key (`discovery-context-v1-*`), change the
-  key when the stored format changes, and never store the API key.
+  `:focus-visible` outlines, colour never the only signal, and respect for `prefers-reduced-motion`.
+- **Themes**: Auto (follows the OS), Light, Dark, Sepia, and High contrast, as `data-theme` on `<html>`. Every
+  theme defines the same CSS variables, its text clears WCAG AA (4.5:1), and its chart ramp passes the
+  dataviz validator on its surface. Check both when adding or changing a theme. Auto-dark and Dark are
+  duplicate blocks that must stay identical (tested).
+- **localStorage holds only the theme name**, under `discovery-context-v1-theme`. Never store the API key or
+  conversation data. Version any new key (`discovery-context-v1-*`) and change it when its format changes.
 
 ## Layout
 - `index.html`: page entry (Vite).
@@ -129,6 +131,9 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/northwind/scenarios.ts` and `src/ui/sample-sheet.ts`: scenarios to try and the on-page sample-data
   reference, read from `data.ts`. `test/scenarios.test.ts` fails if a scenario names a customer or order
   that doesn't exist, or if its claim about the data stops being true. Update both together.
+- `src/ui/theme.ts` and `public/theme-init.js`: the theme picker, and a classic script loaded in `<head>`
+  that applies the saved theme before first paint. It's a file, not inline, because the CSP blocks inline
+  scripts. Both list the same themes (tested).
 - `src/ui/handoff.ts`: the escalation card shown in the transcript when `escalate_to_human` runs.
 - `src/ui/timeline.ts`: the timeline and inspector. Calls are grouped under the user message that caused
   them. Each call shows its headers (key replaced by a placeholder), settings, `system`, `tools`, and every

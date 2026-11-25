@@ -22,6 +22,7 @@ and shows every request and response as it happens.
   prices with the date and source shown. The "Paid for the context" figure shows how many times over you've
   paid for the conversation by resending it.
 - **What a human reviewer receives.** When the agent escalates, a card shows the exact handoff fields.
+- **Themes.** Auto (matches your system), Light, Dark, Sepia, and High contrast.
 - **Model comparisons.** Switch between Claude Sonnet 5.5, Opus 5.5, and Haiku 5.5. Each conversation's
   numbers stay in a comparison table until you reload the page.
 
@@ -29,7 +30,7 @@ and shows every request and response as it happens.
 
 You paste your own Anthropic API key. The page calls the Claude API straight from your browser, with no
 server in between. The key is never stored: it stays in page memory and is gone when you close or reload
-the tab. The page loads no third-party code, and its Content-Security-Policy only allows connections to
+the tab. The only thing the page saves in your browser is your theme choice. The page loads no third-party code, and its Content-Security-Policy only allows connections to
 `api.anthropic.com`.
 
 Use a dedicated key in a workspace with a low spend limit. A short conversation costs a few cents on

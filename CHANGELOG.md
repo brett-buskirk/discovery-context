@@ -11,6 +11,8 @@ All notable changes to discovery-context are documented here. The format is base
   Northwind Outfitters support agent.
 
 ### Added
+- Theme picker: Auto (follows the OS), Light, Dark, Sepia, and High contrast. The choice is remembered
+  in localStorage (the theme name only) and applied before first paint.
 - A note at the top of the page explaining that the agent is a simulated, single-purpose support agent
   for a made-up store, not a general chatbot.
 

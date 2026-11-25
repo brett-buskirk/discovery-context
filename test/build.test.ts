@@ -39,6 +39,12 @@ describe("built index.html", () => {
     expect(urls.filter((u) => u !== "https://api.anthropic.com")).toEqual([]);
   });
 
+  it("loads the theme script before the app, as a classic (blocking) script", () => {
+    const scripts = html.match(/<script\b[^>]*>/g) ?? [];
+    expect(scripts[0]).toBe('<script src="/discovery-context/theme-init.js">');
+    expect(scripts[1]).toMatch(/type="module"/);
+  });
+
   it("sends no referrer", () => {
     expect(html).toContain('<meta name="referrer" content="no-referrer">');
   });
