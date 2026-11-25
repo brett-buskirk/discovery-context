@@ -11,6 +11,9 @@ All notable changes to discovery-context are documented here. The format is base
   Northwind Outfitters support agent.
 
 ### Added
+- A Stop button while a message is running. It cancels the request in progress (including a wait
+  between retries), starts no further calls, rolls the message back, and explains that a cancelled
+  request may still be billed.
 - Replay mode: four recorded conversations (Haiku, Opus, and two on Sonnet) that anyone can watch
   without an API key. They play through the same chat, timeline, growth panel, and comparison table, and
   never call the API.

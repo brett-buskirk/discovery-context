@@ -183,6 +183,8 @@ button {
 }
 button.secondary { background: transparent; color: var(--blue); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.stop { background: var(--weak); border-color: var(--weak); color: var(--on-blue); }
+button.stop::before { content: "■ "; } /* an icon, so colour isn't the only signal */
 
 .note, .disclaimer { color: var(--muted); font-size: 0.9rem; }
 .error { color: var(--weak); min-height: 1.5em; margin: 0.25rem 0 0; }
