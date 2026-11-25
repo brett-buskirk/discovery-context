@@ -91,7 +91,17 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/main.ts`: app entry. `src/styles.css`: palette, theme, base styles.
 - `src/api/types.ts`: the **only** place the SDK is referenced. Type-only re-exports of the request and
   response shapes. Import API types from here, not from the SDK directly.
-- `test/`: Vitest tests (jsdom). `test/no-runtime-deps.test.ts` fails if anything in `src/` imports
+- `src/api/client.ts`: `createMessage()` over `fetch`. It sets the headers and the `anthropic-version`
+  (`2026-10-21`), and its retry rules mirror `@anthropic-ai/sdk` 1.14. Check both against the SDK when
+  bumping it.
+- `src/agent/session.ts`: the hand-written agent loop. `Session.send()` runs one user turn and keeps a
+  `CallRecord` per API call: a deep-copied request snapshot, the response, attempts, tool runs, and
+  `resentMessageCount`. A turn that can't finish (refusal, `max_tokens`, error, call limit) is rolled back
+  out of `messages` so the conversation stays valid. Its call records are kept.
+- `src/northwind/`: the fictional backend and tools, ported from ccaf-study Build 01. `createBackend()` is a
+  factory, so each session and test is isolated.
+- `test/`: Vitest tests (jsdom). `test/support/mock-api.ts` is a scripted fake of the Messages API. Use
+  it, never the real API. `test/no-runtime-deps.test.ts` fails if anything in `src/` imports
   runtime code from an npm package. Don't weaken or skip it.
 - `tsconfig.json` covers browser code (`src/`, DOM types, no Node). `tsconfig.node.json` covers tests and
   `vite.config.ts` (Node types).
