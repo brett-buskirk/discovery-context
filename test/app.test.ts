@@ -87,10 +87,13 @@ describe("chat", () => {
 
     const transcript = [...root.querySelectorAll(".transcript li")].map((li) => li.textContent);
     expect(transcript).toEqual(["you: I'm marcus@example.com", "agent: Found you, Marcus."]);
-    const calls = [...root.querySelectorAll(".call-log li")].map((li) => li.textContent);
+    const turns = root.querySelectorAll(".timeline .turn");
+    expect(turns).toHaveLength(1);
+    expect(turns[0]!.querySelector("h3")?.textContent).toBe("Message 1: I'm marcus@example.com");
+    const calls = [...turns[0]!.querySelectorAll(".call > details > summary")].map((s) => s.textContent);
     expect(calls).toHaveLength(2);
-    expect(calls[0]).toContain("tool_use · 1 messages sent · input 1000");
-    expect(calls[1]).toContain("end_turn · 3 messages sent · input 1200");
+    expect(calls[0]).toContain("Call 1 · tool_use · 1 message sent (0 resent, 1 new) · 1000 in / 40 out tokens");
+    expect(calls[1]).toContain("Call 2 · end_turn · 3 messages sent (1 resent, 2 new) · 1200 in / 30 out tokens");
   });
 
   it("shows model output containing markup as plain text", async () => {
@@ -121,5 +124,9 @@ describe("chat", () => {
     enterKey(KEY);
     await sendMessage("hi");
     expect(root.querySelector(".transcript .system")?.textContent).toContain("invalid x-api-key");
+    const turn = root.querySelector(".timeline .turn")!;
+    expect(turn.classList.contains("rolled-back")).toBe(true);
+    expect(turn.querySelector(".turn-status")?.textContent).toContain("rolled back");
+    expect(turn.querySelector(".call.failed")).not.toBeNull();
   });
 });

@@ -1,8 +1,8 @@
-// The first working page: key entry, model choice, and a plain chat with a one-line log per API call.
-// The timeline, inspector, and charts replace the log in later PRs.
+// The page: key entry, model choice, the chat, and the timeline of API calls behind it.
 import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
 import { KeyStore } from "../security/key-store";
 import { el } from "./dom";
+import { renderCall, renderTurn } from "./timeline";
 
 export type AppOptions = {
   /** Injected for tests. Defaults to the global fetch. */
@@ -52,7 +52,9 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   );
   const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
   const transcript = el("ol", { class: "transcript", "aria-live": "polite" });
-  const callLog = el("ol", { class: "call-log" });
+  const timeline = el("ol", { class: "timeline" });
+  // The turn group that calls are currently being added to.
+  let currentTurn: ReturnType<typeof renderTurn> | null = null;
   const messageInput = el("input", { id: "message", type: "text", autocomplete: "off", disabled: true });
   const sendButton = el("button", { type: "submit", disabled: true }, "Send");
   const chatForm = el(
@@ -73,7 +75,18 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       transcript,
       chatForm,
     ),
-    el("section", { class: "panel", "aria-label": "API calls" }, el("h2", {}, "API calls"), callLog),
+    el(
+      "section",
+      { class: "panel", "aria-label": "API calls" },
+      el("h2", {}, "API calls"),
+      el(
+        "p",
+        { class: "note" },
+        "Every request this page sends to the Claude API, in order. One message from you can take several calls " +
+          "when the agent uses tools. Open a call to see exactly what was sent and what came back.",
+      ),
+      timeline,
+    ),
     el("p", { class: "disclaimer" }, "Unofficial educational project. Not affiliated with or endorsed by Anthropic."),
   );
 
@@ -87,18 +100,14 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     inFlight?.abort();
     inFlight = null;
     transcript.replaceChildren();
-    callLog.replaceChildren();
+    timeline.replaceChildren();
+    currentTurn = null;
     session = null;
     setChatEnabled(keys.has());
   }
 
   function logCall(call: CallRecord) {
-    const r = call.response;
-    const summary = r
-      ? `#${call.index + 1} (message ${call.turn + 1}) · ${r.stop_reason} · ` +
-        `${call.request.messages.length} messages sent · input ${r.usage.input_tokens} · output ${r.usage.output_tokens} tokens`
-      : `#${call.index + 1} (message ${call.turn + 1}) · failed: ${call.error?.message ?? "unknown error"}`;
-    callLog.append(el("li", {}, summary));
+    currentTurn?.calls.append(renderCall(call));
   }
 
   function say(who: "you" | "agent" | "system", text: string) {
@@ -155,12 +164,21 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     messageInput.value = "";
     setChatEnabled(false);
     say("you", text);
+    const turn = renderTurn(current.turns.length, text);
+    currentTurn = turn;
+    timeline.append(turn.root);
 
     try {
       const outcome = await current.send(text, inFlight.signal);
       if (session !== current) return; // the conversation was reset while this turn was running
-      if (outcome.status === "done") say("agent", outcome.text);
-      else say("system", describeStop(outcome));
+      if (outcome.status === "done") {
+        say("agent", outcome.text);
+      } else {
+        say("system", describeStop(outcome));
+        turn.root.classList.add("rolled-back");
+        turn.status.textContent =
+          "This message was rolled back: it and these calls are no longer part of the history sent to the model.";
+      }
     } finally {
       if (session === current) {
         inFlight = null;

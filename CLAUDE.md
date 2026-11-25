@@ -105,7 +105,10 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/security/key-store.ts`: `KeyStore` holds the key in a `#private` field. Nothing else should keep a
   copy, except `Session`, which also uses a `#private` field.
 - `src/ui/dom.ts`: `el()`, the only way the app builds DOM. Children are text, and `on*` attributes throw.
-- `src/ui/app.ts`: the page (key entry, model picker, chat, call log).
+- `src/ui/app.ts`: the page (key entry, model picker, chat, timeline).
+- `src/ui/timeline.ts`: the timeline and inspector. Calls are grouped under the user message that caused
+  them. Each call shows its headers (key replaced by a placeholder), settings, `system`, `tools`, and every
+  message labelled `resent` or `new`, plus the raw body, response, usage, tool runs, and retries.
 - `test/`: Vitest tests (jsdom). `test/support/mock-api.ts` is a scripted fake of the Messages API. Use
   it, never the real API. `test/no-runtime-deps.test.ts` fails if anything in `src/` imports
   runtime code from an npm package. `test/no-html-sinks.test.ts` fails on `innerHTML`, `eval`, and other
