@@ -8,3 +8,4 @@ All notable changes to discovery-context are documented here. The format is base
 
 ### Added
 - Initial scaffold.
+- Project plan: `CLAUDE.md` with scope, stack, accuracy and key-handling rules; README; roadmap.
