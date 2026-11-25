@@ -11,6 +11,8 @@ All notable changes to discovery-context are documented here. The format is base
   Northwind Outfitters support agent.
 
 ### Added
+- Export conversation (JSON): every request, response, usage number, tool run, and turn, with no key or
+  headers. Key-shaped strings are redacted, including a key pasted into the chat.
 - The agent's replies are formatted: Markdown tables, lists, bold, italic, code, headings, and quotes
   render properly instead of showing raw syntax. Links show as text with their URL.
 - Links to the source code on GitHub in the page header and a new footer.

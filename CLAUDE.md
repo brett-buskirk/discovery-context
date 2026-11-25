@@ -137,6 +137,9 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/ui/theme.ts` and `public/theme-init.js`: the theme picker, and a classic script loaded in `<head>`
   that applies the saved theme before first paint. It's a file, not inline, because the CSP blocks inline
   scripts. Both list the same themes (tested).
+- `src/agent/export.ts`: session export (`context-discovery-session`, version 1): config, turns, and every
+  `CallRecord`. It never includes headers or the key, and anything key-shaped (`sk-ant-…`, or the current key)
+  is redacted when serialised. Bump `EXPORT_VERSION` if the shape changes; replay reads this format.
 - `src/ui/markdown.ts`: renders the agent's replies (tables, lists, bold, code) without HTML strings. Only
   the agent's chat bubbles use it. The inspector always shows the raw reply.
 - `src/ui/handoff.ts`: the escalation card shown in the transcript when `escalate_to_human` runs.
