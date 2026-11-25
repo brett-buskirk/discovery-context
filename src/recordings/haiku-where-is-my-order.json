@@ -1,0 +1,734 @@
+{
+  "format": "context-discovery-session",
+  "version": 1,
+  "exportedAt": "2026-11-25T20:19:24.194Z",
+  "app": {
+    "name": "Context Discovery",
+    "version": "0.1.1"
+  },
+  "pricingAsOf": "2026-11-25",
+  "config": {
+    "model": "claude-haiku-5-5",
+    "effort": "medium",
+    "maxTokens": 16000,
+    "maxCallsPerTurn": 10
+  },
+  "turns": [
+    {
+      "index": 0,
+      "userText": "Hi, I'm marcus@example.com. Where is my stove? Order ORD-5003.",
+      "outcome": {
+        "status": "done",
+        "text": "Thanks, Marcus. I found your account and order ORD-5003.\n\n- **Item:** Camp stove\n- **Total:** $89.50\n- **Status:** Code 2, which doesn't map to a clear shipping status in my system. It also has no delivery date yet, so it hasn't been marked as delivered.\n\nI can't tell from this record exactly where the stove is in transit. If you'd like, I can check your other orders for a tracking update, or connect you with a human agent who can trace the shipment. Which would you prefer?"
+      }
+    }
+  ],
+  "calls": [
+    {
+      "index": 0,
+      "turn": 0,
+      "startedAt": 1795637946968,
+      "request": {
+        "model": "claude-haiku-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Hi, I'm marcus@example.com. Where is my stove? Order ORD-5003."
+          }
+        ]
+      },
+      "resentMessageCount": 0,
+      "response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011ChQGLVxxHj194XtTnt7fe",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01CEL1N4F4BksNqHWqibgp9x",
+            "name": "get_customer",
+            "input": {
+              "email": "marcus@example.com"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 1696,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 54,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 519.7999999970198,
+          "requestId": "req_011ChQGLVn3fvqeBtNMDo5HF"
+        }
+      ],
+      "requestId": "req_011ChQGLVn3fvqeBtNMDo5HF",
+      "toolRuns": [
+        {
+          "id": "toolu_01CEL1N4F4BksNqHWqibgp9x",
+          "name": "get_customer",
+          "input": {
+            "email": "marcus@example.com"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "match_count": 1,
+              "customers": [
+                {
+                  "id": "C-1003",
+                  "name": "Marcus Oyelaran",
+                  "email": "marcus@example.com"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "turn": 0,
+      "startedAt": 1795637947492,
+      "request": {
+        "model": "claude-haiku-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Hi, I'm marcus@example.com. Where is my stove? Order ORD-5003."
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01CEL1N4F4BksNqHWqibgp9x",
+                "name": "get_customer",
+                "input": {
+                  "email": "marcus@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01CEL1N4F4BksNqHWqibgp9x",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1003\",\"name\":\"Marcus Oyelaran\",\"email\":\"marcus@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "resentMessageCount": 1,
+      "response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011ChQGLY6D3cuHsRySkyde2",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01HqxUa51wd5Ezsgn4WkuvY1",
+            "name": "lookup_order",
+            "input": {
+              "customer_id": "C-1003",
+              "order_id": "ORD-5003"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 1806,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 83,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 558.6000000014901,
+          "requestId": "req_011ChQGLXv3L8gbw8SXyPXwb"
+        }
+      ],
+      "requestId": "req_011ChQGLXv3L8gbw8SXyPXwb",
+      "toolRuns": [
+        {
+          "id": "toolu_01HqxUa51wd5Ezsgn4WkuvY1",
+          "name": "lookup_order",
+          "input": {
+            "customer_id": "C-1003",
+            "order_id": "ORD-5003"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "found": true,
+              "order": {
+                "id": "ORD-5003",
+                "item": "Camp stove",
+                "total": 89.5,
+                "statusCode": 2,
+                "deliveredAt": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "turn": 0,
+      "startedAt": 1795637948056,
+      "request": {
+        "model": "claude-haiku-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Hi, I'm marcus@example.com. Where is my stove? Order ORD-5003."
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01CEL1N4F4BksNqHWqibgp9x",
+                "name": "get_customer",
+                "input": {
+                  "email": "marcus@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01CEL1N4F4BksNqHWqibgp9x",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1003\",\"name\":\"Marcus Oyelaran\",\"email\":\"marcus@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01HqxUa51wd5Ezsgn4WkuvY1",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1003",
+                  "order_id": "ORD-5003"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01HqxUa51wd5Ezsgn4WkuvY1",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5003\",\"item\":\"Camp stove\",\"total\":89.5,\"statusCode\":2,\"deliveredAt\":null}}",
+                "is_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "resentMessageCount": 3,
+      "response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011ChQGLaYJASnNdaZMTGAhm",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQSqQYKEAgUGAI4AUIIdGhpbmtpbmcSDAN2IYDK3S2YakF2khoMDl33huzemq43m4/vIjBF0gpY22Bk1/ZaPn+TtF+fsj8jdH3I3Yz2ZlTp03h8siOYX2WTcWhQ7Zdz703LCNUqxgXlHC6TJSDd87w9G8vHZu61W3xxfy6sFPstkjfqrY0GAJN45zkBsVxWUN7SLdQkfmswxFU+0iAXPEl4sOYHXHdvGxzTP0kaemfSN3E/0yilg0NC9EfbFlscvahfZbEvYBI0gCW0xYcCe+x705y73nx3OgaW+8x9iKy91idt1Wz+RUjvNzULTLKEfKxpG6PcLvEVNnhxf2UkZx6m+QrIWWujhDieti3mT0JrAl8VNejHOWXQ5j89pnVmYPoQacCGBQ6GG/rJ1+h+lUvfv0TrXS/9fZ2QTmwT0kunaXQMR9ng0i622fHL2VB0PEuboEvhbtX56RPPZPbHL3vDF7e8d+VFvNV6T7r0ah+oYvmcnWW+bRgdtkqYlrokWCLydZaZftPnEtDWhrWrW7wyOXV+gxTRdYiXzDgWu8LVr5VdAzmWUdWiP/pvJly8fkG3m2fvpRuRQ16bZB7YOyHMrWmEeNlgZwQbrgYb1ucEzTyZix1KfpCWBS2YG2wlIKhwL3/awYwAZFpeaKGaKAoXdSD35DhL56D2Gd0Cc9vGOsIvMHqAU9GiesvQeq9pMAA4tu1K4iIvmXkZkTUMtte3eMfZCtejlqwzzzQGaHLm5waXqcWAuM9oLpNxXHuZDeycsFlAzxrQrvo0KoWTVQ/hh7NKvCUP3ylsabeElJHwpK40MHaWvXhQ+WjEFLXDt8mzQugKHkRXrMjzCz02nJi9GY4h9u9dIpqgCbtS6EEk/CfIe+cLpDfsi/IM/IFc7stE336NzT+bgFKaVGPzAgvtnbheiuCjeOxtvjbs1CeTi51ks82g1LXW31x0f5mAdzetCLO8y4KR1Qa0pGGK/yWgjm2YZVxi1XiyraOMw4aOpXoaLLt7KcOAul6KaTpwthPinj9rYHwHfcEO90v132zugvH4KyoEmVMoYa/s5kgKud6+lYAtiZr147UX0xgB"
+          },
+          {
+            "type": "text",
+            "text": "Thanks, Marcus. I found your account and order ORD-5003.\n\n- **Item:** Camp stove\n- **Total:** $89.50\n- **Status:** Code 2, which doesn't map to a clear shipping status in my system. It also has no delivery date yet, so it hasn't been marked as delivered.\n\nI can't tell from this record exactly where the stove is in transit. If you'd like, I can check your other orders for a tracking update, or connect you with a human agent who can trace the shipment. Which would you prefer?"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 1949,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 227,
+          "output_tokens_details": {
+            "thinking_tokens": 57
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 1549,
+          "requestId": "req_011ChQGLaPck2rzU81gA5dvZ"
+        }
+      ],
+      "requestId": "req_011ChQGLaPck2rzU81gA5dvZ",
+      "toolRuns": []
+    }
+  ]
+}

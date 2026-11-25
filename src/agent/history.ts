@@ -18,6 +18,8 @@ export type ConversationSummary = {
   cost: number;
   /** False when the model isn't in the price table, so cost is incomplete. */
   priced: boolean;
+  /** True for a replayed recording rather than a live conversation. */
+  recorded: boolean;
 };
 
 export function summarizeConversation(
@@ -25,6 +27,7 @@ export function summarizeConversation(
   model: string,
   calls: readonly CallRecord[],
   turns: readonly Turn[],
+  recorded = false,
 ): ConversationSummary {
   const growth = analyzeGrowth(calls);
   return {
@@ -40,5 +43,6 @@ export function summarizeConversation(
     output: growth.totalOutput,
     cost: growth.totalCost,
     priced: !growth.unpriced,
+    recorded,
   };
 }

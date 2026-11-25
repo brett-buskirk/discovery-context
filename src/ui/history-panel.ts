@@ -64,7 +64,7 @@ export function renderHistoryPanel(
               "tr",
               { class: isCurrent ? "current" : undefined },
               el("th", { scope: "row" }, String(r.number)),
-              el("td", {}, `${modelLabel(r.model)}${isCurrent ? " (current)" : ""}`),
+              el("td", {}, `${modelLabel(r.model)}${r.recorded ? " (recorded)" : ""}${isCurrent ? " (current)" : ""}`),
               el("td", {}, `${r.messages}${extras.length ? ` (${extras.join(", ")})` : ""}`),
               el("td", {}, String(r.apiCalls)),
               el("td", {}, n(r.inputBilled)),

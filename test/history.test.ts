@@ -39,6 +39,7 @@ describe("summarizeConversation", () => {
       output: 80,
       cost: (2200 * 2 + 80 * 10) / 1e6,
       priced: true,
+      recorded: false,
     });
     // No message text, so nothing the user typed is kept.
     expect(JSON.stringify(summary)).not.toContain("hi");

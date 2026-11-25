@@ -5,7 +5,7 @@
 // catches a key pasted into the chat by mistake.
 import { version as appVersion } from "../../package.json";
 import { PRICING } from "../pricing/cost";
-import type { CallRecord, SessionConfig, Turn } from "./session";
+import { MODELS, type CallRecord, type SessionConfig, type Turn } from "./session";
 
 export const EXPORT_FORMAT = "context-discovery-session";
 export const EXPORT_VERSION = 1;
@@ -55,4 +55,25 @@ export function serializeSessionExport(data: SessionExport, knownKey?: string): 
 export function exportFileName(model: string, now: Date = new Date()): string {
   const stamp = now.toISOString().slice(0, 16).replace(/[:T]/g, "-"); // 2026-11-25-14-03
   return `context-discovery-${model}-${stamp}.json`;
+}
+
+/**
+ * Checks that a parsed JSON value is a session export this version can read. Light structural checks,
+ * enough to fail clearly on the wrong file rather than half-render it.
+ */
+export function parseSessionExport(value: unknown): SessionExport {
+  const v = value as Partial<SessionExport> | null;
+  if (!v || typeof v !== "object" || v.format !== EXPORT_FORMAT) {
+    throw new Error("This isn't a Context Discovery session export.");
+  }
+  if (v.version !== EXPORT_VERSION) throw new Error(`Unsupported export version: ${String(v.version)}.`);
+  if (!v.config || !MODELS.some((m) => m.id === v.config?.model)) throw new Error("The export names an unknown model.");
+  if (!Array.isArray(v.turns) || !Array.isArray(v.calls)) throw new Error("The export has no turns or calls.");
+  const turnIndexes = new Set(v.turns.map((t) => t.index));
+  for (const call of v.calls) {
+    if (!Array.isArray(call?.request?.messages) || !turnIndexes.has(call.turn)) {
+      throw new Error("The export has a call that doesn't match its turns.");
+    }
+  }
+  return v as SessionExport;
 }

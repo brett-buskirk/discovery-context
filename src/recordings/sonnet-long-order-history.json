@@ -1,0 +1,2164 @@
+{
+  "format": "context-discovery-session",
+  "version": 1,
+  "exportedAt": "2026-11-25T20:21:18.746Z",
+  "app": {
+    "name": "Context Discovery",
+    "version": "0.1.1"
+  },
+  "pricingAsOf": "2026-11-25",
+  "config": {
+    "model": "claude-sonnet-5-5",
+    "effort": "medium",
+    "maxTokens": 16000,
+    "maxCallsPerTurn": 10
+  },
+  "turns": [
+    {
+      "index": 0,
+      "userText": "I'm amara@example.com. Can you list all of my orders?",
+      "outcome": {
+        "status": "done",
+        "text": "Thanks, Amara. Your account has 10 orders.\n\n| Order | Item | Total | Status |\n|---|---|---|---|\n| ORD-5016 | Climbing harness | $74.95 | Delivered |\n| ORD-5017 | Belay device | $29.95 | Delivered |\n| ORD-5018 | Climbing shoes | $159.00 | Delivered |\n| ORD-5019 | Chalk bag | $22.00 | Delivered |\n| ORD-5020 | Dynamic rope, 60 m | $219.00 | Delivered |\n| ORD-5021 | Quickdraw set | $129.00 | Delivered |\n| ORD-5022 | Helmet | $69.95 | Delivered |\n| ORD-5023 | Approach shoes | $139.00 | Delivered |\n| ORD-5024 | Crash pad | $229.00 | Not yet delivered (status code 2) |\n| ORD-5025 | Hangboard | $99.00 | Not yet delivered (status code 1) |\n\nThe system gives status as a numeric code only. I've read code 3 as delivered, and codes 1 and 2 as earlier stages with no delivery date. I can't tell you exactly what those two stages mean.\n\nI can look up any of these orders in more detail, or help with a refund on a delivered one."
+      }
+    },
+    {
+      "index": 1,
+      "userText": "Which of those have shipped?",
+      "outcome": {
+        "status": "done",
+        "text": "I can't say for certain which orders have shipped. The system only gives numeric status codes, and the detailed lookup showed the same codes with no labels.\n\n- **Delivered (code 3):** ORD-5016 through ORD-5023 have a delivery timestamp. They must have shipped to get there.\n- **ORD-5024, Crash pad (code 2):** It has no delivery date. It's probably in transit, but I can't confirm that.\n- **ORD-5025, Hangboard (code 1):** It has no delivery date. It's probably still being processed and hasn't shipped, but I can't confirm that either.\n\nI can pass ORD-5024 and ORD-5025 to a human agent to confirm their exact shipping status and tracking. Would you like me to do that?"
+      }
+    },
+    {
+      "index": 2,
+      "userText": "Can I return the helmet?",
+      "outcome": {
+        "status": "done",
+        "text": "Your helmet (ORD-5022, $69.95) shows as delivered, so it's the kind of order that can be refunded.\n\nI don't have Northwind's return policy available, though. That means I can't tell you the return window, whether the helmet has to be unused, or how to send it back. I don't want to guess at any of that.\n\nI can do either of these:\n1. **Hand this to a human agent.** I'd include the order details and your request for a $69.95 refund, so they can confirm eligibility and give you return instructions.\n2. **Process the $69.95 refund myself.** This goes back to your original payment method and can't be undone. I'd only do this if you tell me you want the refund now.\n\nWhich would you like? If it helps, tell me why you're returning it, for example a defect, a sizing problem or a change of mind."
+      }
+    }
+  ],
+  "calls": [
+    {
+      "index": 0,
+      "turn": 0,
+      "startedAt": 1795637986974,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          }
+        ]
+      },
+      "resentMessageCount": 0,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGPTHJq6iZ1DmWXNTQM",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+            "name": "get_customer",
+            "input": {
+              "email": "amara@example.com"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 1685,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 53,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 748.3000000044703,
+          "requestId": "req_011ChQGPSwDjZhr2H1PsCDnV"
+        }
+      ],
+      "requestId": "req_011ChQGPSwDjZhr2H1PsCDnV",
+      "toolRuns": [
+        {
+          "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+          "name": "get_customer",
+          "input": {
+            "email": "amara@example.com"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "match_count": 1,
+              "customers": [
+                {
+                  "id": "C-1009",
+                  "name": "Amara Okafor",
+                  "email": "amara@example.com"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "turn": 0,
+      "startedAt": 1795637987727,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "name": "get_customer",
+                "input": {
+                  "email": "amara@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1009\",\"name\":\"Amara Okafor\",\"email\":\"amara@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "resentMessageCount": 1,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGPWBSo6z8yyN8TgkW2",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+            "name": "list_orders",
+            "input": {
+              "customer_id": "C-1009"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 1790,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 54,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 655.5,
+          "requestId": "req_011ChQGPW22GAZEHL7JfXEq4"
+        }
+      ],
+      "requestId": "req_011ChQGPW22GAZEHL7JfXEq4",
+      "toolRuns": [
+        {
+          "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+          "name": "list_orders",
+          "input": {
+            "customer_id": "C-1009"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "customer_id": "C-1009",
+              "order_count": 10,
+              "orders": [
+                {
+                  "id": "ORD-5016",
+                  "item": "Climbing harness",
+                  "total": 74.95,
+                  "statusCode": 3,
+                  "deliveredAt": 1785269986
+                },
+                {
+                  "id": "ORD-5017",
+                  "item": "Belay device",
+                  "total": 29.95,
+                  "statusCode": 3,
+                  "deliveredAt": 1785269986
+                },
+                {
+                  "id": "ORD-5018",
+                  "item": "Climbing shoes",
+                  "total": 159,
+                  "statusCode": 3,
+                  "deliveredAt": 1787429986
+                },
+                {
+                  "id": "ORD-5019",
+                  "item": "Chalk bag",
+                  "total": 22,
+                  "statusCode": 3,
+                  "deliveredAt": 1787429986
+                },
+                {
+                  "id": "ORD-5020",
+                  "item": "Dynamic rope, 60 m",
+                  "total": 219,
+                  "statusCode": 3,
+                  "deliveredAt": 1790453986
+                },
+                {
+                  "id": "ORD-5021",
+                  "item": "Quickdraw set",
+                  "total": 129,
+                  "statusCode": 3,
+                  "deliveredAt": 1790453986
+                },
+                {
+                  "id": "ORD-5022",
+                  "item": "Helmet",
+                  "total": 69.95,
+                  "statusCode": 3,
+                  "deliveredAt": 1793477986
+                },
+                {
+                  "id": "ORD-5023",
+                  "item": "Approach shoes",
+                  "total": 139,
+                  "statusCode": 3,
+                  "deliveredAt": 1794860386
+                },
+                {
+                  "id": "ORD-5024",
+                  "item": "Crash pad",
+                  "total": 229,
+                  "statusCode": 2,
+                  "deliveredAt": null
+                },
+                {
+                  "id": "ORD-5025",
+                  "item": "Hangboard",
+                  "total": 99,
+                  "statusCode": 1,
+                  "deliveredAt": null
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "turn": 0,
+      "startedAt": 1795637988389,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "name": "get_customer",
+                "input": {
+                  "email": "amara@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1009\",\"name\":\"Amara Okafor\",\"email\":\"amara@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "name": "list_orders",
+                "input": {
+                  "customer_id": "C-1009"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "content": "{\"customer_id\":\"C-1009\",\"order_count\":10,\"orders\":[{\"id\":\"ORD-5016\",\"item\":\"Climbing harness\",\"total\":74.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5017\",\"item\":\"Belay device\",\"total\":29.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5018\",\"item\":\"Climbing shoes\",\"total\":159,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5019\",\"item\":\"Chalk bag\",\"total\":22,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5020\",\"item\":\"Dynamic rope, 60 m\",\"total\":219,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5021\",\"item\":\"Quickdraw set\",\"total\":129,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5022\",\"item\":\"Helmet\",\"total\":69.95,\"statusCode\":3,\"deliveredAt\":1793477986},{\"id\":\"ORD-5023\",\"item\":\"Approach shoes\",\"total\":139,\"statusCode\":3,\"deliveredAt\":1794860386},{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null},{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}]}",
+                "is_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "resentMessageCount": 3,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGPYxckhGdrmQkLhvVJ",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQSuAgKEAgUGAI4AUIIdGhpbmtpbmcSDAXUCJDtySsmYHt1OBoMYOA6Mk+bDTpTu7pBIjD5Ya8yX07R/ktI8F5SOp3n3B2Cbrm0ypLCrP0U0YxeR+VN8ghZwXEJNhwpulG7IQIq1QcYj7BdZS3wtk3Bjf2UqLmxxIBzvNRnzrBBig0/PNFCxwtT+3QpFyaLNeDNdnrXnxLp0x1Z+J2QMlTZ10rfrl9ntX+zE9W9sBh17mrZrlKLlvxO3GvhEIsMZpOn+slQACxyBaUvv911T3SdmZFQe+trjNiXGLRtycTzG4CNkt3jPzPsXZAeOVARWPFbvqv3I8k9izdWFaV14WCk01urk9qSj1hWcaGBamJQt3D/RWUN/w0G7ro7TTrhf192ipYa/FzfQxVarlimTZR1wlFK9ljOfhqsA9Axw87hla9FPuSAeApF4qkqE2DSnWDiciFJHo3Ro9Y5z6l+dPyGxoRwvAoD4Jkrme4R/nDoKP0t3VPtBC4bgPazN4/UjFj7HlnzjWy9VuF0zA90uTenhM1Slr9z6SbkOsMgaRfHjIdyXMJqHZAY7MHVBLqNY8aK50gEptai9zItMyTeWJMoEoIBC1EzQqzuzDtpw/0ZKBnqy/8S8o8lz/anvVnC3MQjmQGbDFe9qClcwdfkFp/1FfLNsPe4E38dmfNGaSuN9n1XngQcV/8v9ZPzpNQK9fqCSp5Xb3EF1haZ3JVZcnkVR490pnJ3LB+E9ouoxtLT4QRT5mQpTLkwbItGB79I6eRVok4BS7mUOm7YXgnMEQ9okiulwDhs8MJtORFV6tYYugYmKiihhM9ljoB8QR4JuerCPKePM7U8Qvljv99wIyRap0f/jN7jpw32ddhgW0X3ntnGnpzbMAWTZJ8Ki0IsraDEMIb6Fq50/kOD4z+bpXd4fDX0Dxf4WxqRS9YDh97R2fue1UIyFI6iaLeXd1TM3rwK7Jeh9OR7UsJrTGwGuRzw684YiHabfMphsIqAlQ2Pwb6gXbyXZfLJjH10skYAqY70ATIRv5iwx8/F/vwTJ1oAZJy2i13ikqRc2F4BcrkzqC0OLbhDlhvk3u1pbLTwRuJyGKrIIEY42/QP4xJZgujscfc9RwGDn5fKNc8ny/LoZttn5Yq/pt5uY3FWVr+isBlnfAj9udZQQTuPYbvQePcZjZ+QIMo915rcXmFeSMcdMTsH8WU7+hSkfvEJlU56D0hQ4bafrlY33Wf7UC5++fEDZnG1MTYLZhe9FNd2xjJb2HVB1gIXX/7nFg8XphHRJhrKr50JX6F8SkHIZQOvfc4IrX7FR54wJPjSh4TtCzFCCB3XTYQ4h3GR5r3j/xfVV5VLLbf0njvedMGfedj77cD3JJKqRMQ/tTYgzbVGcAIXDeeayAMIPJM6wJu8l4HMg36i4vimafbNlxx54N6f5CwzrOyVTQTH3lQRLqgYAQ=="
+          },
+          {
+            "type": "text",
+            "text": "Thanks, Amara. Your account has 10 orders.\n\n| Order | Item | Total | Status |\n|---|---|---|---|\n| ORD-5016 | Climbing harness | $74.95 | Delivered |\n| ORD-5017 | Belay device | $29.95 | Delivered |\n| ORD-5018 | Climbing shoes | $159.00 | Delivered |\n| ORD-5019 | Chalk bag | $22.00 | Delivered |\n| ORD-5020 | Dynamic rope, 60 m | $219.00 | Delivered |\n| ORD-5021 | Quickdraw set | $129.00 | Delivered |\n| ORD-5022 | Helmet | $69.95 | Delivered |\n| ORD-5023 | Approach shoes | $139.00 | Delivered |\n| ORD-5024 | Crash pad | $229.00 | Not yet delivered (status code 2) |\n| ORD-5025 | Hangboard | $99.00 | Not yet delivered (status code 1) |\n\nThe system gives status as a numeric code only. I've read code 3 as delivered, and codes 1 and 2 as earlier stages with no delivery date. I can't tell you exactly what those two stages mean.\n\nI can look up any of these orders in more detail, or help with a refund on a delivered one."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 2347,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 635,
+          "output_tokens_details": {
+            "thinking_tokens": 196
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 4635.80000000447,
+          "requestId": "req_011ChQGPYowj74X2qrmRZcgG"
+        }
+      ],
+      "requestId": "req_011ChQGPYowj74X2qrmRZcgG",
+      "toolRuns": []
+    },
+    {
+      "index": 3,
+      "turn": 1,
+      "startedAt": 1795638020312,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "name": "get_customer",
+                "input": {
+                  "email": "amara@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1009\",\"name\":\"Amara Okafor\",\"email\":\"amara@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "name": "list_orders",
+                "input": {
+                  "customer_id": "C-1009"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "content": "{\"customer_id\":\"C-1009\",\"order_count\":10,\"orders\":[{\"id\":\"ORD-5016\",\"item\":\"Climbing harness\",\"total\":74.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5017\",\"item\":\"Belay device\",\"total\":29.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5018\",\"item\":\"Climbing shoes\",\"total\":159,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5019\",\"item\":\"Chalk bag\",\"total\":22,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5020\",\"item\":\"Dynamic rope, 60 m\",\"total\":219,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5021\",\"item\":\"Quickdraw set\",\"total\":129,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5022\",\"item\":\"Helmet\",\"total\":69.95,\"statusCode\":3,\"deliveredAt\":1793477986},{\"id\":\"ORD-5023\",\"item\":\"Approach shoes\",\"total\":139,\"statusCode\":3,\"deliveredAt\":1794860386},{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null},{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQSuAgKEAgUGAI4AUIIdGhpbmtpbmcSDAXUCJDtySsmYHt1OBoMYOA6Mk+bDTpTu7pBIjD5Ya8yX07R/ktI8F5SOp3n3B2Cbrm0ypLCrP0U0YxeR+VN8ghZwXEJNhwpulG7IQIq1QcYj7BdZS3wtk3Bjf2UqLmxxIBzvNRnzrBBig0/PNFCxwtT+3QpFyaLNeDNdnrXnxLp0x1Z+J2QMlTZ10rfrl9ntX+zE9W9sBh17mrZrlKLlvxO3GvhEIsMZpOn+slQACxyBaUvv911T3SdmZFQe+trjNiXGLRtycTzG4CNkt3jPzPsXZAeOVARWPFbvqv3I8k9izdWFaV14WCk01urk9qSj1hWcaGBamJQt3D/RWUN/w0G7ro7TTrhf192ipYa/FzfQxVarlimTZR1wlFK9ljOfhqsA9Axw87hla9FPuSAeApF4qkqE2DSnWDiciFJHo3Ro9Y5z6l+dPyGxoRwvAoD4Jkrme4R/nDoKP0t3VPtBC4bgPazN4/UjFj7HlnzjWy9VuF0zA90uTenhM1Slr9z6SbkOsMgaRfHjIdyXMJqHZAY7MHVBLqNY8aK50gEptai9zItMyTeWJMoEoIBC1EzQqzuzDtpw/0ZKBnqy/8S8o8lz/anvVnC3MQjmQGbDFe9qClcwdfkFp/1FfLNsPe4E38dmfNGaSuN9n1XngQcV/8v9ZPzpNQK9fqCSp5Xb3EF1haZ3JVZcnkVR490pnJ3LB+E9ouoxtLT4QRT5mQpTLkwbItGB79I6eRVok4BS7mUOm7YXgnMEQ9okiulwDhs8MJtORFV6tYYugYmKiihhM9ljoB8QR4JuerCPKePM7U8Qvljv99wIyRap0f/jN7jpw32ddhgW0X3ntnGnpzbMAWTZJ8Ki0IsraDEMIb6Fq50/kOD4z+bpXd4fDX0Dxf4WxqRS9YDh97R2fue1UIyFI6iaLeXd1TM3rwK7Jeh9OR7UsJrTGwGuRzw684YiHabfMphsIqAlQ2Pwb6gXbyXZfLJjH10skYAqY70ATIRv5iwx8/F/vwTJ1oAZJy2i13ikqRc2F4BcrkzqC0OLbhDlhvk3u1pbLTwRuJyGKrIIEY42/QP4xJZgujscfc9RwGDn5fKNc8ny/LoZttn5Yq/pt5uY3FWVr+isBlnfAj9udZQQTuPYbvQePcZjZ+QIMo915rcXmFeSMcdMTsH8WU7+hSkfvEJlU56D0hQ4bafrlY33Wf7UC5++fEDZnG1MTYLZhe9FNd2xjJb2HVB1gIXX/7nFg8XphHRJhrKr50JX6F8SkHIZQOvfc4IrX7FR54wJPjSh4TtCzFCCB3XTYQ4h3GR5r3j/xfVV5VLLbf0njvedMGfedj77cD3JJKqRMQ/tTYgzbVGcAIXDeeayAMIPJM6wJu8l4HMg36i4vimafbNlxx54N6f5CwzrOyVTQTH3lQRLqgYAQ=="
+              },
+              {
+                "type": "text",
+                "text": "Thanks, Amara. Your account has 10 orders.\n\n| Order | Item | Total | Status |\n|---|---|---|---|\n| ORD-5016 | Climbing harness | $74.95 | Delivered |\n| ORD-5017 | Belay device | $29.95 | Delivered |\n| ORD-5018 | Climbing shoes | $159.00 | Delivered |\n| ORD-5019 | Chalk bag | $22.00 | Delivered |\n| ORD-5020 | Dynamic rope, 60 m | $219.00 | Delivered |\n| ORD-5021 | Quickdraw set | $129.00 | Delivered |\n| ORD-5022 | Helmet | $69.95 | Delivered |\n| ORD-5023 | Approach shoes | $139.00 | Delivered |\n| ORD-5024 | Crash pad | $229.00 | Not yet delivered (status code 2) |\n| ORD-5025 | Hangboard | $99.00 | Not yet delivered (status code 1) |\n\nThe system gives status as a numeric code only. I've read code 3 as delivered, and codes 1 and 2 as earlier stages with no delivery date. I can't tell you exactly what those two stages mean.\n\nI can look up any of these orders in more detail, or help with a refund on a delivered one."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": "Which of those have shipped?"
+          }
+        ]
+      },
+      "resentMessageCount": 5,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGRumZza1wQW5M9xMz6",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQS1wYKEAgUGAI4AUIIdGhpbmtpbmcSDHTedyDgsx1ZEwuueRoMeE9I0nVPvKexYRNLIjCU04V8CJ1SIYpT/9ncPDwsQt5dOZhDPJxtuiUKynWqA8r0uQZUz3ozUGMWd1nxToIq9AW8btrgZEvdis2VZVKKTtTAl9+cRK4iMquOrMK/DkX7wq8qb8qTLYijcRoBrS5voCxWJB82ZbyPvaYyPEJpXldxJvFB6iw5s9qUvNphCTqIpvTHjFkNQP0zgrf4yIVHBNHq5hxI80czlosWM/+eEnamfl1HEBpbHZ+lVeXqiM610GrgUWFDSigYfcF7zX+g4MiaINgFlCVOP0Nbc+YCYmZGSOWFbUKDhVwsuMCZLw1I7TLbu84HoMzq0DCXIMdmcZ0oRPb8rH8fCJMZlebOfDrBhyZptNoiFaw6cjwQ0fSYks5mRkJSxIVKMYmACbYBFSMCeWV2IK2kNgrtU529dVQld4ZgtokFPVzIg59eCdMcFFtm6adfSW1TlK1fAJB5KsU3ojZJxkZ4FeX87baM9t6WLjft7rj41VmDlhiKOCgW4nMUmXmuJSV7ROb5mC//aEnIOQcB4LAomZt6IL/GwonQiOS3GftVmbacSSpc2x0MqZjasBn2/HQ64EYOwH7AT/Y9KzWi3F8SgNykQ7fNVB+l/5CPnmISOINl1BA30HlvEheYk3RKWA+LL7X1CIZkwIvrbBnRng0LlhI5NUiNhpnIITvWEuBOuqne9zhf7wADXD/OJkKhA6Mz6l0D3GhTdyQ+XUaV8rDP8EQ9syBEqmJD84kFFYvOaVTGvY+NG8OGqqKGwoD+IeFVFyq+SF5KGZ0fKemhsaigFnOIfvLbpkwYUQKhG6Rih3WTB3/4W9b3BOgrU/eVIIGfW7N0xHrQ3k3wQ9y43ZjWFA2fJ5EN9JQxf/cBKGpWBZ3HHd3nuN8fcgcsN4RFChdY8rQpQv1ELZatPTnpShaPnalxo9ayFQD5etWwZW+3mOcv1hY1u/+5DuKsTR/5+RaVpYEJr60eS5t+D1oMrit0X6p4f70uF3RirIEYtn2HvNIRRIatl0yJL6urBlk3DgSJb9BZDta8HBS204zcPrSNAdzixcJT+2hwdT7Uv87p02n8QFH8paoBiHQhhsIYAQ=="
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+            "name": "lookup_order",
+            "input": {
+              "customer_id": "C-1009",
+              "order_id": "ORD-5024"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+            "name": "lookup_order",
+            "input": {
+              "customer_id": "C-1009",
+              "order_id": "ORD-5025"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 2995,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 219,
+          "output_tokens_details": {
+            "thinking_tokens": 55
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 1726.1000000014901,
+          "requestId": "req_011ChQGRuRUwU7hC3bvTNGqv"
+        }
+      ],
+      "requestId": "req_011ChQGRuRUwU7hC3bvTNGqv",
+      "toolRuns": [
+        {
+          "id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+          "name": "lookup_order",
+          "input": {
+            "customer_id": "C-1009",
+            "order_id": "ORD-5024"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "found": true,
+              "order": {
+                "id": "ORD-5024",
+                "item": "Crash pad",
+                "total": 229,
+                "statusCode": 2,
+                "deliveredAt": null
+              }
+            }
+          }
+        },
+        {
+          "id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+          "name": "lookup_order",
+          "input": {
+            "customer_id": "C-1009",
+            "order_id": "ORD-5025"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "found": true,
+              "order": {
+                "id": "ORD-5025",
+                "item": "Hangboard",
+                "total": 99,
+                "statusCode": 1,
+                "deliveredAt": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "turn": 1,
+      "startedAt": 1795638022045,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "name": "get_customer",
+                "input": {
+                  "email": "amara@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1009\",\"name\":\"Amara Okafor\",\"email\":\"amara@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "name": "list_orders",
+                "input": {
+                  "customer_id": "C-1009"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "content": "{\"customer_id\":\"C-1009\",\"order_count\":10,\"orders\":[{\"id\":\"ORD-5016\",\"item\":\"Climbing harness\",\"total\":74.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5017\",\"item\":\"Belay device\",\"total\":29.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5018\",\"item\":\"Climbing shoes\",\"total\":159,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5019\",\"item\":\"Chalk bag\",\"total\":22,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5020\",\"item\":\"Dynamic rope, 60 m\",\"total\":219,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5021\",\"item\":\"Quickdraw set\",\"total\":129,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5022\",\"item\":\"Helmet\",\"total\":69.95,\"statusCode\":3,\"deliveredAt\":1793477986},{\"id\":\"ORD-5023\",\"item\":\"Approach shoes\",\"total\":139,\"statusCode\":3,\"deliveredAt\":1794860386},{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null},{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQSuAgKEAgUGAI4AUIIdGhpbmtpbmcSDAXUCJDtySsmYHt1OBoMYOA6Mk+bDTpTu7pBIjD5Ya8yX07R/ktI8F5SOp3n3B2Cbrm0ypLCrP0U0YxeR+VN8ghZwXEJNhwpulG7IQIq1QcYj7BdZS3wtk3Bjf2UqLmxxIBzvNRnzrBBig0/PNFCxwtT+3QpFyaLNeDNdnrXnxLp0x1Z+J2QMlTZ10rfrl9ntX+zE9W9sBh17mrZrlKLlvxO3GvhEIsMZpOn+slQACxyBaUvv911T3SdmZFQe+trjNiXGLRtycTzG4CNkt3jPzPsXZAeOVARWPFbvqv3I8k9izdWFaV14WCk01urk9qSj1hWcaGBamJQt3D/RWUN/w0G7ro7TTrhf192ipYa/FzfQxVarlimTZR1wlFK9ljOfhqsA9Axw87hla9FPuSAeApF4qkqE2DSnWDiciFJHo3Ro9Y5z6l+dPyGxoRwvAoD4Jkrme4R/nDoKP0t3VPtBC4bgPazN4/UjFj7HlnzjWy9VuF0zA90uTenhM1Slr9z6SbkOsMgaRfHjIdyXMJqHZAY7MHVBLqNY8aK50gEptai9zItMyTeWJMoEoIBC1EzQqzuzDtpw/0ZKBnqy/8S8o8lz/anvVnC3MQjmQGbDFe9qClcwdfkFp/1FfLNsPe4E38dmfNGaSuN9n1XngQcV/8v9ZPzpNQK9fqCSp5Xb3EF1haZ3JVZcnkVR490pnJ3LB+E9ouoxtLT4QRT5mQpTLkwbItGB79I6eRVok4BS7mUOm7YXgnMEQ9okiulwDhs8MJtORFV6tYYugYmKiihhM9ljoB8QR4JuerCPKePM7U8Qvljv99wIyRap0f/jN7jpw32ddhgW0X3ntnGnpzbMAWTZJ8Ki0IsraDEMIb6Fq50/kOD4z+bpXd4fDX0Dxf4WxqRS9YDh97R2fue1UIyFI6iaLeXd1TM3rwK7Jeh9OR7UsJrTGwGuRzw684YiHabfMphsIqAlQ2Pwb6gXbyXZfLJjH10skYAqY70ATIRv5iwx8/F/vwTJ1oAZJy2i13ikqRc2F4BcrkzqC0OLbhDlhvk3u1pbLTwRuJyGKrIIEY42/QP4xJZgujscfc9RwGDn5fKNc8ny/LoZttn5Yq/pt5uY3FWVr+isBlnfAj9udZQQTuPYbvQePcZjZ+QIMo915rcXmFeSMcdMTsH8WU7+hSkfvEJlU56D0hQ4bafrlY33Wf7UC5++fEDZnG1MTYLZhe9FNd2xjJb2HVB1gIXX/7nFg8XphHRJhrKr50JX6F8SkHIZQOvfc4IrX7FR54wJPjSh4TtCzFCCB3XTYQ4h3GR5r3j/xfVV5VLLbf0njvedMGfedj77cD3JJKqRMQ/tTYgzbVGcAIXDeeayAMIPJM6wJu8l4HMg36i4vimafbNlxx54N6f5CwzrOyVTQTH3lQRLqgYAQ=="
+              },
+              {
+                "type": "text",
+                "text": "Thanks, Amara. Your account has 10 orders.\n\n| Order | Item | Total | Status |\n|---|---|---|---|\n| ORD-5016 | Climbing harness | $74.95 | Delivered |\n| ORD-5017 | Belay device | $29.95 | Delivered |\n| ORD-5018 | Climbing shoes | $159.00 | Delivered |\n| ORD-5019 | Chalk bag | $22.00 | Delivered |\n| ORD-5020 | Dynamic rope, 60 m | $219.00 | Delivered |\n| ORD-5021 | Quickdraw set | $129.00 | Delivered |\n| ORD-5022 | Helmet | $69.95 | Delivered |\n| ORD-5023 | Approach shoes | $139.00 | Delivered |\n| ORD-5024 | Crash pad | $229.00 | Not yet delivered (status code 2) |\n| ORD-5025 | Hangboard | $99.00 | Not yet delivered (status code 1) |\n\nThe system gives status as a numeric code only. I've read code 3 as delivered, and codes 1 and 2 as earlier stages with no delivery date. I can't tell you exactly what those two stages mean.\n\nI can look up any of these orders in more detail, or help with a refund on a delivered one."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": "Which of those have shipped?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQS1wYKEAgUGAI4AUIIdGhpbmtpbmcSDHTedyDgsx1ZEwuueRoMeE9I0nVPvKexYRNLIjCU04V8CJ1SIYpT/9ncPDwsQt5dOZhDPJxtuiUKynWqA8r0uQZUz3ozUGMWd1nxToIq9AW8btrgZEvdis2VZVKKTtTAl9+cRK4iMquOrMK/DkX7wq8qb8qTLYijcRoBrS5voCxWJB82ZbyPvaYyPEJpXldxJvFB6iw5s9qUvNphCTqIpvTHjFkNQP0zgrf4yIVHBNHq5hxI80czlosWM/+eEnamfl1HEBpbHZ+lVeXqiM610GrgUWFDSigYfcF7zX+g4MiaINgFlCVOP0Nbc+YCYmZGSOWFbUKDhVwsuMCZLw1I7TLbu84HoMzq0DCXIMdmcZ0oRPb8rH8fCJMZlebOfDrBhyZptNoiFaw6cjwQ0fSYks5mRkJSxIVKMYmACbYBFSMCeWV2IK2kNgrtU529dVQld4ZgtokFPVzIg59eCdMcFFtm6adfSW1TlK1fAJB5KsU3ojZJxkZ4FeX87baM9t6WLjft7rj41VmDlhiKOCgW4nMUmXmuJSV7ROb5mC//aEnIOQcB4LAomZt6IL/GwonQiOS3GftVmbacSSpc2x0MqZjasBn2/HQ64EYOwH7AT/Y9KzWi3F8SgNykQ7fNVB+l/5CPnmISOINl1BA30HlvEheYk3RKWA+LL7X1CIZkwIvrbBnRng0LlhI5NUiNhpnIITvWEuBOuqne9zhf7wADXD/OJkKhA6Mz6l0D3GhTdyQ+XUaV8rDP8EQ9syBEqmJD84kFFYvOaVTGvY+NG8OGqqKGwoD+IeFVFyq+SF5KGZ0fKemhsaigFnOIfvLbpkwYUQKhG6Rih3WTB3/4W9b3BOgrU/eVIIGfW7N0xHrQ3k3wQ9y43ZjWFA2fJ5EN9JQxf/cBKGpWBZ3HHd3nuN8fcgcsN4RFChdY8rQpQv1ELZatPTnpShaPnalxo9ayFQD5etWwZW+3mOcv1hY1u/+5DuKsTR/5+RaVpYEJr60eS5t+D1oMrit0X6p4f70uF3RirIEYtn2HvNIRRIatl0yJL6urBlk3DgSJb9BZDta8HBS204zcPrSNAdzixcJT+2hwdT7Uv87p02n8QFH8paoBiHQhhsIYAQ=="
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5024"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5025"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null}}",
+                "is_error": false
+              },
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}}",
+                "is_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "resentMessageCount": 7,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGS2qxsozVXG59CnzBw",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I can't say for certain which orders have shipped. The system only gives numeric status codes, and the detailed lookup showed the same codes with no labels.\n\n- **Delivered (code 3):** ORD-5016 through ORD-5023 have a delivery timestamp. They must have shipped to get there.\n- **ORD-5024, Crash pad (code 2):** It has no delivery date. It's probably in transit, but I can't confirm that.\n- **ORD-5025, Hangboard (code 1):** It has no delivery date. It's probably still being processed and hasn't shipped, but I can't confirm that either.\n\nI can pass ORD-5024 and ORD-5025 to a human agent to confirm their exact shipping status and tracking. Would you like me to do that?"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3380,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 248,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 2109.7000000029802,
+          "requestId": "req_011ChQGS2hYJg9ThTCTxsJuA"
+        }
+      ],
+      "requestId": "req_011ChQGS2hYJg9ThTCTxsJuA",
+      "toolRuns": []
+    },
+    {
+      "index": 5,
+      "turn": 2,
+      "startedAt": 1795638050508,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "name": "get_customer",
+                "input": {
+                  "email": "amara@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1009\",\"name\":\"Amara Okafor\",\"email\":\"amara@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "name": "list_orders",
+                "input": {
+                  "customer_id": "C-1009"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "content": "{\"customer_id\":\"C-1009\",\"order_count\":10,\"orders\":[{\"id\":\"ORD-5016\",\"item\":\"Climbing harness\",\"total\":74.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5017\",\"item\":\"Belay device\",\"total\":29.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5018\",\"item\":\"Climbing shoes\",\"total\":159,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5019\",\"item\":\"Chalk bag\",\"total\":22,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5020\",\"item\":\"Dynamic rope, 60 m\",\"total\":219,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5021\",\"item\":\"Quickdraw set\",\"total\":129,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5022\",\"item\":\"Helmet\",\"total\":69.95,\"statusCode\":3,\"deliveredAt\":1793477986},{\"id\":\"ORD-5023\",\"item\":\"Approach shoes\",\"total\":139,\"statusCode\":3,\"deliveredAt\":1794860386},{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null},{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQSuAgKEAgUGAI4AUIIdGhpbmtpbmcSDAXUCJDtySsmYHt1OBoMYOA6Mk+bDTpTu7pBIjD5Ya8yX07R/ktI8F5SOp3n3B2Cbrm0ypLCrP0U0YxeR+VN8ghZwXEJNhwpulG7IQIq1QcYj7BdZS3wtk3Bjf2UqLmxxIBzvNRnzrBBig0/PNFCxwtT+3QpFyaLNeDNdnrXnxLp0x1Z+J2QMlTZ10rfrl9ntX+zE9W9sBh17mrZrlKLlvxO3GvhEIsMZpOn+slQACxyBaUvv911T3SdmZFQe+trjNiXGLRtycTzG4CNkt3jPzPsXZAeOVARWPFbvqv3I8k9izdWFaV14WCk01urk9qSj1hWcaGBamJQt3D/RWUN/w0G7ro7TTrhf192ipYa/FzfQxVarlimTZR1wlFK9ljOfhqsA9Axw87hla9FPuSAeApF4qkqE2DSnWDiciFJHo3Ro9Y5z6l+dPyGxoRwvAoD4Jkrme4R/nDoKP0t3VPtBC4bgPazN4/UjFj7HlnzjWy9VuF0zA90uTenhM1Slr9z6SbkOsMgaRfHjIdyXMJqHZAY7MHVBLqNY8aK50gEptai9zItMyTeWJMoEoIBC1EzQqzuzDtpw/0ZKBnqy/8S8o8lz/anvVnC3MQjmQGbDFe9qClcwdfkFp/1FfLNsPe4E38dmfNGaSuN9n1XngQcV/8v9ZPzpNQK9fqCSp5Xb3EF1haZ3JVZcnkVR490pnJ3LB+E9ouoxtLT4QRT5mQpTLkwbItGB79I6eRVok4BS7mUOm7YXgnMEQ9okiulwDhs8MJtORFV6tYYugYmKiihhM9ljoB8QR4JuerCPKePM7U8Qvljv99wIyRap0f/jN7jpw32ddhgW0X3ntnGnpzbMAWTZJ8Ki0IsraDEMIb6Fq50/kOD4z+bpXd4fDX0Dxf4WxqRS9YDh97R2fue1UIyFI6iaLeXd1TM3rwK7Jeh9OR7UsJrTGwGuRzw684YiHabfMphsIqAlQ2Pwb6gXbyXZfLJjH10skYAqY70ATIRv5iwx8/F/vwTJ1oAZJy2i13ikqRc2F4BcrkzqC0OLbhDlhvk3u1pbLTwRuJyGKrIIEY42/QP4xJZgujscfc9RwGDn5fKNc8ny/LoZttn5Yq/pt5uY3FWVr+isBlnfAj9udZQQTuPYbvQePcZjZ+QIMo915rcXmFeSMcdMTsH8WU7+hSkfvEJlU56D0hQ4bafrlY33Wf7UC5++fEDZnG1MTYLZhe9FNd2xjJb2HVB1gIXX/7nFg8XphHRJhrKr50JX6F8SkHIZQOvfc4IrX7FR54wJPjSh4TtCzFCCB3XTYQ4h3GR5r3j/xfVV5VLLbf0njvedMGfedj77cD3JJKqRMQ/tTYgzbVGcAIXDeeayAMIPJM6wJu8l4HMg36i4vimafbNlxx54N6f5CwzrOyVTQTH3lQRLqgYAQ=="
+              },
+              {
+                "type": "text",
+                "text": "Thanks, Amara. Your account has 10 orders.\n\n| Order | Item | Total | Status |\n|---|---|---|---|\n| ORD-5016 | Climbing harness | $74.95 | Delivered |\n| ORD-5017 | Belay device | $29.95 | Delivered |\n| ORD-5018 | Climbing shoes | $159.00 | Delivered |\n| ORD-5019 | Chalk bag | $22.00 | Delivered |\n| ORD-5020 | Dynamic rope, 60 m | $219.00 | Delivered |\n| ORD-5021 | Quickdraw set | $129.00 | Delivered |\n| ORD-5022 | Helmet | $69.95 | Delivered |\n| ORD-5023 | Approach shoes | $139.00 | Delivered |\n| ORD-5024 | Crash pad | $229.00 | Not yet delivered (status code 2) |\n| ORD-5025 | Hangboard | $99.00 | Not yet delivered (status code 1) |\n\nThe system gives status as a numeric code only. I've read code 3 as delivered, and codes 1 and 2 as earlier stages with no delivery date. I can't tell you exactly what those two stages mean.\n\nI can look up any of these orders in more detail, or help with a refund on a delivered one."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": "Which of those have shipped?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQS1wYKEAgUGAI4AUIIdGhpbmtpbmcSDHTedyDgsx1ZEwuueRoMeE9I0nVPvKexYRNLIjCU04V8CJ1SIYpT/9ncPDwsQt5dOZhDPJxtuiUKynWqA8r0uQZUz3ozUGMWd1nxToIq9AW8btrgZEvdis2VZVKKTtTAl9+cRK4iMquOrMK/DkX7wq8qb8qTLYijcRoBrS5voCxWJB82ZbyPvaYyPEJpXldxJvFB6iw5s9qUvNphCTqIpvTHjFkNQP0zgrf4yIVHBNHq5hxI80czlosWM/+eEnamfl1HEBpbHZ+lVeXqiM610GrgUWFDSigYfcF7zX+g4MiaINgFlCVOP0Nbc+YCYmZGSOWFbUKDhVwsuMCZLw1I7TLbu84HoMzq0DCXIMdmcZ0oRPb8rH8fCJMZlebOfDrBhyZptNoiFaw6cjwQ0fSYks5mRkJSxIVKMYmACbYBFSMCeWV2IK2kNgrtU529dVQld4ZgtokFPVzIg59eCdMcFFtm6adfSW1TlK1fAJB5KsU3ojZJxkZ4FeX87baM9t6WLjft7rj41VmDlhiKOCgW4nMUmXmuJSV7ROb5mC//aEnIOQcB4LAomZt6IL/GwonQiOS3GftVmbacSSpc2x0MqZjasBn2/HQ64EYOwH7AT/Y9KzWi3F8SgNykQ7fNVB+l/5CPnmISOINl1BA30HlvEheYk3RKWA+LL7X1CIZkwIvrbBnRng0LlhI5NUiNhpnIITvWEuBOuqne9zhf7wADXD/OJkKhA6Mz6l0D3GhTdyQ+XUaV8rDP8EQ9syBEqmJD84kFFYvOaVTGvY+NG8OGqqKGwoD+IeFVFyq+SF5KGZ0fKemhsaigFnOIfvLbpkwYUQKhG6Rih3WTB3/4W9b3BOgrU/eVIIGfW7N0xHrQ3k3wQ9y43ZjWFA2fJ5EN9JQxf/cBKGpWBZ3HHd3nuN8fcgcsN4RFChdY8rQpQv1ELZatPTnpShaPnalxo9ayFQD5etWwZW+3mOcv1hY1u/+5DuKsTR/5+RaVpYEJr60eS5t+D1oMrit0X6p4f70uF3RirIEYtn2HvNIRRIatl0yJL6urBlk3DgSJb9BZDta8HBS204zcPrSNAdzixcJT+2hwdT7Uv87p02n8QFH8paoBiHQhhsIYAQ=="
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5024"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5025"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null}}",
+                "is_error": false
+              },
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "I can't say for certain which orders have shipped. The system only gives numeric status codes, and the detailed lookup showed the same codes with no labels.\n\n- **Delivered (code 3):** ORD-5016 through ORD-5023 have a delivery timestamp. They must have shipped to get there.\n- **ORD-5024, Crash pad (code 2):** It has no delivery date. It's probably in transit, but I can't confirm that.\n- **ORD-5025, Hangboard (code 1):** It has no delivery date. It's probably still being processed and hasn't shipped, but I can't confirm that either.\n\nI can pass ORD-5024 and ORD-5025 to a human agent to confirm their exact shipping status and tracking. Would you like me to do that?"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": "Can I return the helmet?"
+          }
+        ]
+      },
+      "resentMessageCount": 9,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGU92be4LRTyu1XKiiK",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQSlQkKEAgUGAI4AUIIdGhpbmtpbmcSDKxKmkrs1SSoFD4n/xoMuMqQypeqa4f88hH7IjAXuoB9SxWtTd7T1PK6ELq4GUf+/ykrClptIVr/WXn1RoR/s5ft0cHCnMW3LARlTDEqsgirR2IeIPnSrFI941lsUv5qJjOkF3Ms4x8bXrKcWQz1UM4kpXAErkSA52xlETB+ZaBqpXBIllYajfNBAiyB742Mi6j4s0Dm/Js3f5Glbr22N2SWJJ/vaClTLEQxXb8KCbQCPezoZayx8ADYI9NvncK6iTCI3A0y0oa2NH1n0baY7H9C0ka5hbR3VHOE/3+WuPoyNvMByDbzt5wzMjvj8+aEU+T5SNAm99aseTp58Qct2Irk8GgvLMS83O+XHS0DVJOHThPnSat9N8gI3oFhMzLwKCASaCatrzrvazYgwmGxKeHRRefikyg5oodY96iVB48YDyFslw4M+XOREkV84pJJENyqGCQt7XxysFK7zDOEqFoKyQyosGyKyWCyP1zvNXHBsw78FXYDSP/95ZnOvYlOJDZnp9IayQtzCs5N3ckSjT2Dt66muOryoKUEyqoMB6acx1i9sLzwaySEYTxvBQg0bFULVmRJtEf58fV5GxdzAioU0wV/2LvL+lJ2dq1ZZTFxKEEnNfA6+VhI+Ay99LhpolNwa8tenZQOV8Ei986nkvdIBP21IAbxYJjc7WARJAVOT27Q5ek64BLxsynvRzNZP23BTW/E7Ej5Tud+s3X65cf4Q7+AUyms3N+3LrNnWXLUyZ3pyCSwjJRLlHBFvLBgXcxRC+GmQf3y7UR9DzCASkeIT4148nWOH5m8ZjP3w81ByxYUoGaupGQ9njn27tNSxwVMOKZy7KwI5cELqSlOM5pGzVZkPuOBtu8kM2q5EmLri4UdgFXnwru5uMjHwrJSXLfgnX7yvfKs+Idk7yOPHg3as4F2YR9tsjZwVH2rMyDaZ3OBESWWOW4zZ4w1WrwFK4fkyqYR7KObFEiB8uP1haED/e21q5CT1r+uoMZu5XcPjrYK6rQay+n/nKYiXWKyqRLKQKjPl+g4/fha2uLZIYJ9tFjzcFgIKVC0kX1EnjyG6epOG4Rh+8+w8gpWXE6U2ba17quXQBsB0n+3ZGlUafv+SFlGlgpo5xxRJ3r54SenCPCdi7mgv2WOk0UL7cImpQnLFBCjEoHupfhk0WXxd7icUdmCJR3wYJS8q2aM6xd+7mnZFn8jYCBjKc3xibDHsRPq1HaoADOfMxs1bANer/oSR/Zfwmvt/BDUJaOe5te+Jz3gzerDLxwqoeppMOKlY29NPzCrzHhnJ18FeL81CfsgCRwHlHHi4bvDvdRTSA8pGffI576oKQO5oTnnstrumzi3dEFOtnPx+V1xOGqnwY7PBbGJKNHa9dD+L+QeRsscXvbOTZDcw+UzOOOgG0dzRwXFAmMy/FoRk2n7nQGkbPMG7WELZMmCjXZeAZIeiaji+wUKp/WWgEqKyBU2YPKmquIIlZ9hJxXjCz4mLF0L+5iJj3RvkGwwh8+63lgbKCsJiyEoeIsOPuWQ+1EMnh39qJ4YAQ=="
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_01UpbVFvtv8xXr6rWTYT3T5z",
+            "name": "lookup_order",
+            "input": {
+              "customer_id": "C-1009",
+              "order_id": "ORD-5022"
+            },
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "container": null,
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3641,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 221,
+          "output_tokens_details": {
+            "thinking_tokens": 137
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 2131.2000000029802,
+          "requestId": "req_011ChQGU8WqxnXTM7wyfYHFx"
+        }
+      ],
+      "requestId": "req_011ChQGU8WqxnXTM7wyfYHFx",
+      "toolRuns": [
+        {
+          "id": "toolu_01UpbVFvtv8xXr6rWTYT3T5z",
+          "name": "lookup_order",
+          "input": {
+            "customer_id": "C-1009",
+            "order_id": "ORD-5022"
+          },
+          "result": {
+            "isError": false,
+            "data": {
+              "found": true,
+              "order": {
+                "id": "ORD-5022",
+                "item": "Helmet",
+                "total": 69.95,
+                "statusCode": 3,
+                "deliveredAt": 1793477986
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "turn": 2,
+      "startedAt": 1795638052645,
+      "request": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 16000,
+        "system": "You are a support agent for Northwind Outfitters, an outdoor gear store. Verify the customer with get_customer before doing anything else.",
+        "tools": [
+          {
+            "name": "get_customer",
+            "description": "Find and verify a customer account. Call this FIRST in every conversation, before any order lookup or refund.\nInput: the account email (preferred) or the customer's full name.\nReturns match_count and a list of matching accounts (customer_id, name, email).\nIf match_count is greater than 1, do not pick one: ask the customer for the email on the account.\nIf match_count is 0, the search worked and nobody matched: ask the customer to confirm their details.\nThis tool does NOT return orders, and an order ID is never a valid input here. Use lookup_order for orders.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Email on the account. Preferred."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Full name. Only if no email is available."
+                }
+              }
+            }
+          },
+          {
+            "name": "lookup_order",
+            "description": "Retrieve one order by its order ID (format ORD-1234).\nRequires the customer_id returned by get_customer.\nReturns item, total in USD, status, and delivery time.\nUse for requests like \"where is my order\", \"check order ORD-5001\", or before any refund.\nIf the customer doesn't know the order ID, use list_orders first.\nThis tool does NOT look up people. To identify a customer, use get_customer.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1001"
+                },
+                "order_id": {
+                  "type": "string",
+                  "description": "e.g. ORD-5001"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id"
+              ]
+            }
+          },
+          {
+            "name": "list_orders",
+            "description": "List every order on a verified customer's account.\nRequires the customer_id returned by get_customer.\nReturns order_count and, for each order, its ID, item, total in USD, status, and delivery time.\nUse when the customer doesn't know an order ID or asks what orders they have.\nAn order_count of 0 means the account has no orders: the search worked, it is not an error.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string",
+                  "description": "From get_customer, e.g. C-1004"
+                }
+              },
+              "required": [
+                "customer_id"
+              ]
+            }
+          },
+          {
+            "name": "process_refund",
+            "description": "Refund money to the customer's original payment method. This moves real money and cannot be undone.\nRequires customer_id from get_customer and an order_id you have already confirmed with lookup_order.\nOnly delivered orders can be refunded, and amount cannot exceed the order total.\nRefunds over $500 cannot be processed here: use escalate_to_human instead.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": "string"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "USD"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customer_id",
+                "order_id",
+                "amount",
+                "reason"
+              ]
+            }
+          },
+          {
+            "name": "escalate_to_human",
+            "description": "Hand the conversation to a human support agent.\nUse when the customer asks for a human, when policy does not cover the request, when a refund exceeds $500, or when you cannot make progress.\nThe human will NOT see this conversation. Every field must make sense on its own.\nUse null for customer_id or refund_amount when they do not apply. Never invent a value.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "customer_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "What the customer wants, in two sentences"
+                },
+                "root_cause": {
+                  "type": "string",
+                  "description": "Why this needs a human"
+                },
+                "recommended_action": {
+                  "type": "string"
+                },
+                "refund_amount": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "USD, if a refund is involved"
+                }
+              },
+              "required": [
+                "customer_id",
+                "summary",
+                "root_cause",
+                "recommended_action",
+                "refund_amount"
+              ]
+            }
+          }
+        ],
+        "output_config": {
+          "effort": "medium"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "I'm amara@example.com. Can you list all of my orders?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "name": "get_customer",
+                "input": {
+                  "email": "amara@example.com"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01PxhU11ruqRPQMVyTjxtDAa",
+                "content": "{\"match_count\":1,\"customers\":[{\"id\":\"C-1009\",\"name\":\"Amara Okafor\",\"email\":\"amara@example.com\"}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "name": "list_orders",
+                "input": {
+                  "customer_id": "C-1009"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01WRfH8mJ5PG4XSjNyCsiusu",
+                "content": "{\"customer_id\":\"C-1009\",\"order_count\":10,\"orders\":[{\"id\":\"ORD-5016\",\"item\":\"Climbing harness\",\"total\":74.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5017\",\"item\":\"Belay device\",\"total\":29.95,\"statusCode\":3,\"deliveredAt\":1785269986},{\"id\":\"ORD-5018\",\"item\":\"Climbing shoes\",\"total\":159,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5019\",\"item\":\"Chalk bag\",\"total\":22,\"statusCode\":3,\"deliveredAt\":1787429986},{\"id\":\"ORD-5020\",\"item\":\"Dynamic rope, 60 m\",\"total\":219,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5021\",\"item\":\"Quickdraw set\",\"total\":129,\"statusCode\":3,\"deliveredAt\":1790453986},{\"id\":\"ORD-5022\",\"item\":\"Helmet\",\"total\":69.95,\"statusCode\":3,\"deliveredAt\":1793477986},{\"id\":\"ORD-5023\",\"item\":\"Approach shoes\",\"total\":139,\"statusCode\":3,\"deliveredAt\":1794860386},{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null},{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}]}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQSuAgKEAgUGAI4AUIIdGhpbmtpbmcSDAXUCJDtySsmYHt1OBoMYOA6Mk+bDTpTu7pBIjD5Ya8yX07R/ktI8F5SOp3n3B2Cbrm0ypLCrP0U0YxeR+VN8ghZwXEJNhwpulG7IQIq1QcYj7BdZS3wtk3Bjf2UqLmxxIBzvNRnzrBBig0/PNFCxwtT+3QpFyaLNeDNdnrXnxLp0x1Z+J2QMlTZ10rfrl9ntX+zE9W9sBh17mrZrlKLlvxO3GvhEIsMZpOn+slQACxyBaUvv911T3SdmZFQe+trjNiXGLRtycTzG4CNkt3jPzPsXZAeOVARWPFbvqv3I8k9izdWFaV14WCk01urk9qSj1hWcaGBamJQt3D/RWUN/w0G7ro7TTrhf192ipYa/FzfQxVarlimTZR1wlFK9ljOfhqsA9Axw87hla9FPuSAeApF4qkqE2DSnWDiciFJHo3Ro9Y5z6l+dPyGxoRwvAoD4Jkrme4R/nDoKP0t3VPtBC4bgPazN4/UjFj7HlnzjWy9VuF0zA90uTenhM1Slr9z6SbkOsMgaRfHjIdyXMJqHZAY7MHVBLqNY8aK50gEptai9zItMyTeWJMoEoIBC1EzQqzuzDtpw/0ZKBnqy/8S8o8lz/anvVnC3MQjmQGbDFe9qClcwdfkFp/1FfLNsPe4E38dmfNGaSuN9n1XngQcV/8v9ZPzpNQK9fqCSp5Xb3EF1haZ3JVZcnkVR490pnJ3LB+E9ouoxtLT4QRT5mQpTLkwbItGB79I6eRVok4BS7mUOm7YXgnMEQ9okiulwDhs8MJtORFV6tYYugYmKiihhM9ljoB8QR4JuerCPKePM7U8Qvljv99wIyRap0f/jN7jpw32ddhgW0X3ntnGnpzbMAWTZJ8Ki0IsraDEMIb6Fq50/kOD4z+bpXd4fDX0Dxf4WxqRS9YDh97R2fue1UIyFI6iaLeXd1TM3rwK7Jeh9OR7UsJrTGwGuRzw684YiHabfMphsIqAlQ2Pwb6gXbyXZfLJjH10skYAqY70ATIRv5iwx8/F/vwTJ1oAZJy2i13ikqRc2F4BcrkzqC0OLbhDlhvk3u1pbLTwRuJyGKrIIEY42/QP4xJZgujscfc9RwGDn5fKNc8ny/LoZttn5Yq/pt5uY3FWVr+isBlnfAj9udZQQTuPYbvQePcZjZ+QIMo915rcXmFeSMcdMTsH8WU7+hSkfvEJlU56D0hQ4bafrlY33Wf7UC5++fEDZnG1MTYLZhe9FNd2xjJb2HVB1gIXX/7nFg8XphHRJhrKr50JX6F8SkHIZQOvfc4IrX7FR54wJPjSh4TtCzFCCB3XTYQ4h3GR5r3j/xfVV5VLLbf0njvedMGfedj77cD3JJKqRMQ/tTYgzbVGcAIXDeeayAMIPJM6wJu8l4HMg36i4vimafbNlxx54N6f5CwzrOyVTQTH3lQRLqgYAQ=="
+              },
+              {
+                "type": "text",
+                "text": "Thanks, Amara. Your account has 10 orders.\n\n| Order | Item | Total | Status |\n|---|---|---|---|\n| ORD-5016 | Climbing harness | $74.95 | Delivered |\n| ORD-5017 | Belay device | $29.95 | Delivered |\n| ORD-5018 | Climbing shoes | $159.00 | Delivered |\n| ORD-5019 | Chalk bag | $22.00 | Delivered |\n| ORD-5020 | Dynamic rope, 60 m | $219.00 | Delivered |\n| ORD-5021 | Quickdraw set | $129.00 | Delivered |\n| ORD-5022 | Helmet | $69.95 | Delivered |\n| ORD-5023 | Approach shoes | $139.00 | Delivered |\n| ORD-5024 | Crash pad | $229.00 | Not yet delivered (status code 2) |\n| ORD-5025 | Hangboard | $99.00 | Not yet delivered (status code 1) |\n\nThe system gives status as a numeric code only. I've read code 3 as delivered, and codes 1 and 2 as earlier stages with no delivery date. I can't tell you exactly what those two stages mean.\n\nI can look up any of these orders in more detail, or help with a refund on a delivered one."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": "Which of those have shipped?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQS1wYKEAgUGAI4AUIIdGhpbmtpbmcSDHTedyDgsx1ZEwuueRoMeE9I0nVPvKexYRNLIjCU04V8CJ1SIYpT/9ncPDwsQt5dOZhDPJxtuiUKynWqA8r0uQZUz3ozUGMWd1nxToIq9AW8btrgZEvdis2VZVKKTtTAl9+cRK4iMquOrMK/DkX7wq8qb8qTLYijcRoBrS5voCxWJB82ZbyPvaYyPEJpXldxJvFB6iw5s9qUvNphCTqIpvTHjFkNQP0zgrf4yIVHBNHq5hxI80czlosWM/+eEnamfl1HEBpbHZ+lVeXqiM610GrgUWFDSigYfcF7zX+g4MiaINgFlCVOP0Nbc+YCYmZGSOWFbUKDhVwsuMCZLw1I7TLbu84HoMzq0DCXIMdmcZ0oRPb8rH8fCJMZlebOfDrBhyZptNoiFaw6cjwQ0fSYks5mRkJSxIVKMYmACbYBFSMCeWV2IK2kNgrtU529dVQld4ZgtokFPVzIg59eCdMcFFtm6adfSW1TlK1fAJB5KsU3ojZJxkZ4FeX87baM9t6WLjft7rj41VmDlhiKOCgW4nMUmXmuJSV7ROb5mC//aEnIOQcB4LAomZt6IL/GwonQiOS3GftVmbacSSpc2x0MqZjasBn2/HQ64EYOwH7AT/Y9KzWi3F8SgNykQ7fNVB+l/5CPnmISOINl1BA30HlvEheYk3RKWA+LL7X1CIZkwIvrbBnRng0LlhI5NUiNhpnIITvWEuBOuqne9zhf7wADXD/OJkKhA6Mz6l0D3GhTdyQ+XUaV8rDP8EQ9syBEqmJD84kFFYvOaVTGvY+NG8OGqqKGwoD+IeFVFyq+SF5KGZ0fKemhsaigFnOIfvLbpkwYUQKhG6Rih3WTB3/4W9b3BOgrU/eVIIGfW7N0xHrQ3k3wQ9y43ZjWFA2fJ5EN9JQxf/cBKGpWBZ3HHd3nuN8fcgcsN4RFChdY8rQpQv1ELZatPTnpShaPnalxo9ayFQD5etWwZW+3mOcv1hY1u/+5DuKsTR/5+RaVpYEJr60eS5t+D1oMrit0X6p4f70uF3RirIEYtn2HvNIRRIatl0yJL6urBlk3DgSJb9BZDta8HBS204zcPrSNAdzixcJT+2hwdT7Uv87p02n8QFH8paoBiHQhhsIYAQ=="
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5024"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5025"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01RjcXp4EYe2T2q1NQm7ykkA",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5024\",\"item\":\"Crash pad\",\"total\":229,\"statusCode\":2,\"deliveredAt\":null}}",
+                "is_error": false
+              },
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01LeWp5QsYHGmSFAgDrSwJV9",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5025\",\"item\":\"Hangboard\",\"total\":99,\"statusCode\":1,\"deliveredAt\":null}}",
+                "is_error": false
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "I can't say for certain which orders have shipped. The system only gives numeric status codes, and the detailed lookup showed the same codes with no labels.\n\n- **Delivered (code 3):** ORD-5016 through ORD-5023 have a delivery timestamp. They must have shipped to get there.\n- **ORD-5024, Crash pad (code 2):** It has no delivery date. It's probably in transit, but I can't confirm that.\n- **ORD-5025, Hangboard (code 1):** It has no delivery date. It's probably still being processed and hasn't shipped, but I can't confirm that either.\n\nI can pass ORD-5024 and ORD-5025 to a human agent to confirm their exact shipping status and tracking. Would you like me to do that?"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": "Can I return the helmet?"
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "CAQSlQkKEAgUGAI4AUIIdGhpbmtpbmcSDKxKmkrs1SSoFD4n/xoMuMqQypeqa4f88hH7IjAXuoB9SxWtTd7T1PK6ELq4GUf+/ykrClptIVr/WXn1RoR/s5ft0cHCnMW3LARlTDEqsgirR2IeIPnSrFI941lsUv5qJjOkF3Ms4x8bXrKcWQz1UM4kpXAErkSA52xlETB+ZaBqpXBIllYajfNBAiyB742Mi6j4s0Dm/Js3f5Glbr22N2SWJJ/vaClTLEQxXb8KCbQCPezoZayx8ADYI9NvncK6iTCI3A0y0oa2NH1n0baY7H9C0ka5hbR3VHOE/3+WuPoyNvMByDbzt5wzMjvj8+aEU+T5SNAm99aseTp58Qct2Irk8GgvLMS83O+XHS0DVJOHThPnSat9N8gI3oFhMzLwKCASaCatrzrvazYgwmGxKeHRRefikyg5oodY96iVB48YDyFslw4M+XOREkV84pJJENyqGCQt7XxysFK7zDOEqFoKyQyosGyKyWCyP1zvNXHBsw78FXYDSP/95ZnOvYlOJDZnp9IayQtzCs5N3ckSjT2Dt66muOryoKUEyqoMB6acx1i9sLzwaySEYTxvBQg0bFULVmRJtEf58fV5GxdzAioU0wV/2LvL+lJ2dq1ZZTFxKEEnNfA6+VhI+Ay99LhpolNwa8tenZQOV8Ei986nkvdIBP21IAbxYJjc7WARJAVOT27Q5ek64BLxsynvRzNZP23BTW/E7Ej5Tud+s3X65cf4Q7+AUyms3N+3LrNnWXLUyZ3pyCSwjJRLlHBFvLBgXcxRC+GmQf3y7UR9DzCASkeIT4148nWOH5m8ZjP3w81ByxYUoGaupGQ9njn27tNSxwVMOKZy7KwI5cELqSlOM5pGzVZkPuOBtu8kM2q5EmLri4UdgFXnwru5uMjHwrJSXLfgnX7yvfKs+Idk7yOPHg3as4F2YR9tsjZwVH2rMyDaZ3OBESWWOW4zZ4w1WrwFK4fkyqYR7KObFEiB8uP1haED/e21q5CT1r+uoMZu5XcPjrYK6rQay+n/nKYiXWKyqRLKQKjPl+g4/fha2uLZIYJ9tFjzcFgIKVC0kX1EnjyG6epOG4Rh+8+w8gpWXE6U2ba17quXQBsB0n+3ZGlUafv+SFlGlgpo5xxRJ3r54SenCPCdi7mgv2WOk0UL7cImpQnLFBCjEoHupfhk0WXxd7icUdmCJR3wYJS8q2aM6xd+7mnZFn8jYCBjKc3xibDHsRPq1HaoADOfMxs1bANer/oSR/Zfwmvt/BDUJaOe5te+Jz3gzerDLxwqoeppMOKlY29NPzCrzHhnJ18FeL81CfsgCRwHlHHi4bvDvdRTSA8pGffI576oKQO5oTnnstrumzi3dEFOtnPx+V1xOGqnwY7PBbGJKNHa9dD+L+QeRsscXvbOTZDcw+UzOOOgG0dzRwXFAmMy/FoRk2n7nQGkbPMG7WELZMmCjXZeAZIeiaji+wUKp/WWgEqKyBU2YPKmquIIlZ9hJxXjCz4mLF0L+5iJj3RvkGwwh8+63lgbKCsJiyEoeIsOPuWQ+1EMnh39qJ4YAQ=="
+              },
+              {
+                "type": "tool_use",
+                "id": "toolu_01UpbVFvtv8xXr6rWTYT3T5z",
+                "name": "lookup_order",
+                "input": {
+                  "customer_id": "C-1009",
+                  "order_id": "ORD-5022"
+                },
+                "caller": {
+                  "type": "direct"
+                }
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "toolu_01UpbVFvtv8xXr6rWTYT3T5z",
+                "content": "{\"found\":true,\"order\":{\"id\":\"ORD-5022\",\"item\":\"Helmet\",\"total\":69.95,\"statusCode\":3,\"deliveredAt\":1793477986}}",
+                "is_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "resentMessageCount": 11,
+      "response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011ChQGUHkDUQZDuW2GRtUBK",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your helmet (ORD-5022, $69.95) shows as delivered, so it's the kind of order that can be refunded.\n\nI don't have Northwind's return policy available, though. That means I can't tell you the return window, whether the helmet has to be unused, or how to send it back. I don't want to guess at any of that.\n\nI can do either of these:\n1. **Hand this to a human agent.** I'd include the order details and your request for a $69.95 refund, so they can confirm eligibility and give you return instructions.\n2. **Process the $69.95 refund myself.** This goes back to your original payment method and can't be undone. I'd only do this if you tell me you want the refund now.\n\nWhich would you like? If it helps, tell me why you're returning it, for example a defect, a sizing problem or a change of mind."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3924,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 257,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      },
+      "error": null,
+      "attempts": [
+        {
+          "status": 200,
+          "durationMs": 2525.5,
+          "requestId": "req_011ChQGUHb3NJe9dxwkXeAM7"
+        }
+      ],
+      "requestId": "req_011ChQGUHb3NJe9dxwkXeAM7",
+      "toolRuns": []
+    }
+  ]
+}

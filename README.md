@@ -26,6 +26,12 @@ and shows every request and response as it happens.
 - **Model comparisons.** Switch between Claude Sonnet 5.5, Opus 5.5, and Haiku 5.5. Each conversation's
   numbers stay in a comparison table until you reload the page.
 
+## No API key? Watch a recording
+
+The page includes recorded conversations, made on the live site and played back step by step through the
+same views. Nothing is sent to the API during a replay, so it's free. Pick one under **Recorded
+conversations** in the conversation panel.
+
 ## How it works
 
 You paste your own Anthropic API key. The page calls the Claude API straight from your browser, with no

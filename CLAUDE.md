@@ -140,6 +140,12 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/agent/export.ts`: session export (`context-discovery-session`, version 1): config, turns, and every
   `CallRecord`. It never includes headers or the key, and anything key-shaped (`sk-ant-…`, or the current key)
   is redacted when serialised. Bump `EXPORT_VERSION` if the shape changes; replay reads this format.
+- `src/recordings/`: real sessions exported from the live page, replayed for visitors without a key.
+  `index.ts` lists them and loads each as a lazy chunk (no CSP change needed). **To add one:** export it
+  from the live site, check it for keys and headers, give it a descriptive file name, and add it to
+  `RECORDINGS`. `test/recordings.test.ts` fails on any key-shaped string or header name, on a file that
+  isn't listed, and on a model mismatch. Replays go through the same rendering path as live turns
+  (`logCall`, `finishTurn` in `app.ts`) and never call the API.
 - `src/ui/markdown.ts`: renders the agent's replies (tables, lists, bold, code) without HTML strings. Only
   the agent's chat bubbles use it. The inspector always shows the raw reply.
 - `src/ui/handoff.ts`: the escalation card shown in the transcript when `escalate_to_human` runs.

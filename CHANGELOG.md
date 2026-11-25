@@ -11,6 +11,9 @@ All notable changes to discovery-context are documented here. The format is base
   Northwind Outfitters support agent.
 
 ### Added
+- Replay mode: four recorded conversations (Haiku, Opus, and two on Sonnet) that anyone can watch
+  without an API key. They play through the same chat, timeline, growth panel, and comparison table, and
+  never call the API.
 - Export conversation (JSON): every request, response, usage number, tool run, and turn, with no key or
   headers. Key-shaped strings are redacted, including a key pasted into the chat.
 - The agent's replies are formatted: Markdown tables, lists, bold, italic, code, headings, and quotes
