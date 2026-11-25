@@ -239,7 +239,26 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .msg.you { align-self: flex-end; align-items: flex-end; }
 .msg.you .bubble { background: var(--blue-soft); border-color: var(--blue); border-bottom-right-radius: 3px; }
 .msg.agent { align-self: flex-start; }
-.msg.agent .bubble { background: var(--paper); border-bottom-left-radius: 3px; }
+.msg.agent .bubble { background: var(--paper); border-bottom-left-radius: 3px; white-space: normal; }
+
+/* Formatted agent replies (markdown.ts). */
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p, .md ul, .md ol, .md blockquote, .md pre, .md .table-wrap { margin: 0 0 0.5rem; }
+.md ul, .md ol { padding-left: 1.25rem; }
+.md li + li { margin-top: 0.15rem; }
+.md .md-heading { margin-top: 0.5rem; }
+.md code { font-family: var(--mono); font-size: 0.85em; background: var(--sheet); border: 1px solid var(--line); border-radius: 3px; padding: 0 0.25rem; }
+.md pre.md-code { font-family: var(--mono); font-size: 0.85rem; background: var(--sheet); border: 1px solid var(--line); border-radius: 4px; padding: 0.5rem; overflow-x: auto; white-space: pre; }
+.md pre.md-code code { background: none; border: 0; padding: 0; }
+.md blockquote { border-left: 3px solid var(--line); padding-left: 0.6rem; color: var(--muted); }
+.md hr { border: 0; border-top: 1px solid var(--line); margin: 0.5rem 0; }
+.md .table-wrap { margin: 0.25rem 0 0.5rem; }
+.md-table { border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.md-table th, .md-table td { border: 1px solid var(--line); padding: 0.25rem 0.5rem; text-align: left; vertical-align: top; }
+.md-table th { background: var(--sheet); }
+.md-table .align-right { text-align: right; }
+.md-table .align-center { text-align: center; }
 .msg.system { align-self: stretch; max-width: none; }
 .msg.system .bubble { border-color: var(--weak); border-left-width: 4px; }
 

@@ -111,6 +111,16 @@ describe("chat", () => {
     expect(root.querySelector(".transcript .agent")?.textContent).toContain('<img src=x onerror="alert(1)">');
   });
 
+  it("formats a Markdown reply instead of showing the raw syntax", async () => {
+    const api = mockApi([message([text("Your orders:\n\n| Order | Item |\n|---|---|\n| ORD-5001 | Headlamp |")], "end_turn")]);
+    const { root, enterKey, sendMessage } = setup(api);
+    enterKey(KEY);
+    await sendMessage("list my orders");
+    const bubble = root.querySelector(".transcript .agent .bubble")!;
+    expect(bubble.querySelector("table td")?.textContent).toBe("ORD-5001");
+    expect(bubble.textContent).not.toContain("|");
+  });
+
   it("sends the selected model", async () => {
     const api = mockApi([message([text("ok")], "end_turn")]);
     const { $, enterKey, sendMessage } = setup(api);

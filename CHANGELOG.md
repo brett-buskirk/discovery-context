@@ -11,6 +11,8 @@ All notable changes to discovery-context are documented here. The format is base
   Northwind Outfitters support agent.
 
 ### Added
+- The agent's replies are formatted: Markdown tables, lists, bold, italic, code, headings, and quotes
+  render properly instead of showing raw syntax. Links show as text with their URL.
 - Links to the source code on GitHub in the page header and a new footer.
 - Theme picker: Auto (follows the OS), Light, Dark, Sepia, and High contrast. The choice is remembered
   in localStorage (the theme name only) and applied before first paint.
