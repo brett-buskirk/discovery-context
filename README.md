@@ -33,6 +33,17 @@ This grew out of a hand-written agent loop in
 [ccaf-study](https://github.com/brett-buskirk/ccaf-study) (Build 01). Logging that loop made one thing
 obvious: the full conversation goes out again on every request, and the bill grows with it.
 
+## Running it locally
+
+You need Node 22.12 or newer.
+
+```sh
+npm install
+npm run dev      # local dev server
+npm test         # tests (they never call the real API)
+npm run build    # typecheck and build to dist/
+```
+
 ## Disclaimer
 
 This is an unofficial educational project. It is not affiliated with or endorsed by Anthropic.
