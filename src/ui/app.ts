@@ -2,7 +2,9 @@
 import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
 import { KeyStore } from "../security/key-store";
 import { el } from "./dom";
+import { summarizeConversation, type ConversationSummary } from "../agent/history";
 import { renderGrowthPanel } from "./growth-panel";
+import { renderHistoryPanel } from "./history-panel";
 import { HANDOFF_TOOL, renderHandoff } from "./handoff";
 import { renderCall, renderTurn } from "./timeline";
 
@@ -55,6 +57,10 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
   const transcript = el("ol", { class: "transcript", "aria-live": "polite" });
   const growth = el("div", { class: "growth" });
+  const historyView = el("div", { class: "history" });
+  // Finished conversations, numbers only, in memory only.
+  const history: ConversationSummary[] = [];
+  let conversationNumber = 1;
   const timeline = el("ol", { class: "timeline" });
   // The turn group that calls are currently being added to.
   let currentTurn: ReturnType<typeof renderTurn> | null = null;
@@ -79,6 +85,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       chatForm,
     ),
     el("section", { class: "panel", "aria-label": "Context growth and cost" }, el("h2", {}, "Context growth and cost"), growth),
+    el("section", { class: "panel", "aria-label": "Compare conversations" }, el("h2", {}, "Compare conversations"), historyView),
     el(
       "section",
       { class: "panel", "aria-label": "API calls" },
@@ -95,6 +102,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   );
 
   renderGrowthPanel(growth, [], modelSelect.value);
+  renderHistory();
 
   // ---------- Behaviour ----------
   function setChatEnabled(enabled: boolean) {
@@ -102,14 +110,36 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     sendButton.disabled = !enabled;
   }
 
+  function currentSummary(): ConversationSummary | null {
+    return session ? summarizeConversation(conversationNumber, session.config.model, session.calls, session.turns) : null;
+  }
+
+  function renderHistory() {
+    renderHistoryPanel(historyView, history, currentSummary(), () => {
+      history.length = 0;
+      renderHistory();
+    });
+  }
+
+  /** Move the current conversation into the history, if it made any API calls. */
+  function archiveSession() {
+    const summary = currentSummary();
+    if (summary && summary.apiCalls > 0) {
+      history.push(summary);
+      conversationNumber++;
+    }
+    session = null;
+  }
+
   function startSession() {
     inFlight?.abort();
     inFlight = null;
+    archiveSession();
     transcript.replaceChildren();
     timeline.replaceChildren();
     currentTurn = null;
     renderGrowthPanel(growth, [], modelSelect.value);
-    session = null;
+    renderHistory();
     setChatEnabled(keys.has());
   }
 
@@ -118,6 +148,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     // Show each handoff in the conversation as it happens, before the agent's reply about it.
     for (const run of call.toolRuns) if (run.name === HANDOFF_TOOL) transcript.append(renderHandoff(run));
     if (session) renderGrowthPanel(growth, session.calls, session.config.model);
+    renderHistory();
   }
 
   function say(who: "you" | "agent" | "system", text: string) {
@@ -146,9 +177,8 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   });
 
   forgetButton.addEventListener("click", () => {
-    inFlight?.abort();
     keys.clear();
-    session = null;
+    startSession(); // aborts any request, keeps the numbers in the comparison table, clears the view
     keyLoaded.hidden = true;
     keyForm.hidden = false;
     setChatEnabled(false);

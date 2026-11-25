@@ -231,3 +231,8 @@ pre.json {
 .handoff dt { color: var(--muted); }
 .handoff dd { margin: 0; white-space: pre-wrap; }
 @media (max-width: 40rem) { .handoff dl { grid-template-columns: 1fr; } .handoff dd { margin-bottom: 0.4rem; } }
+
+/* ---------- Comparison history ---------- */
+.history-table tbody tr.current { font-weight: 600; }
+.history-table td:nth-child(2), .history-table thead th:nth-child(2) { text-align: left; }
+.history-table td:nth-child(3) { text-align: left; }
