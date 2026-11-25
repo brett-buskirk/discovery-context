@@ -14,7 +14,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [x] **Growth chart and cost panel**: input per call split into system and tools, resent history, and new
       content; output tokens; cumulative billed tokens and cost from a dated `pricing.json`.
 - [x] **Handoff card**: escalations shown in the conversation with exactly what the human reviewer receives.
-- [ ] **Comparison history**: finished conversations kept (in memory only) in a table, so models can be
+- [x] **Comparison history**: finished conversations kept (in memory only) in a table, so models can be
       compared after switching.
 - [ ] **Bigger sample data and a sample-data sheet**: more customers and orders, a `list_orders` tool, and an
       on-page reference of who and what exists, with scenarios to try.
