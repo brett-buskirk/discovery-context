@@ -9,7 +9,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
       `fetch` (`stop_reason`-driven, with retries and error handling). Tested with a mocked `fetch`.
 - [x] **Key entry and CSP**: in-memory key handling, key masking, a strict Content-Security-Policy,
       untrusted output rendered as text. Gets its own security review.
-- [ ] **Timeline and inspector**: every API call grouped under the user message that triggered it, with the
+- [x] **Timeline and inspector**: every API call grouped under the user message that triggered it, with the
       raw request and response. History that was already sent is dimmed so the new part stands out.
 - [ ] **Growth chart and cost panel**: input per call split into system and tools, resent history, and new
       content; output tokens; cumulative billed tokens and cost from a dated `pricing.json`.
