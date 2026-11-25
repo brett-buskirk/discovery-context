@@ -6,6 +6,10 @@ All notable changes to discovery-context are documented here. The format is base
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-25
+
+First public release. Live at https://brett-buskirk.github.io/discovery-context/.
+
 ### Added
 - Initial scaffold.
 - Project plan: `CLAUDE.md` with scope, stack, accuracy and key-handling rules; README; roadmap.
@@ -34,3 +38,6 @@ All notable changes to discovery-context are documented here. The format is base
 ### Changed
 - Documentation pass: README describes the live site and what it shows; ROADMAP, CONTRIBUTING, and
   `CLAUDE.md` brought in line with what's built.
+
+[Unreleased]: https://github.com/brett-buskirk/discovery-context/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/brett-buskirk/discovery-context/releases/tag/v0.1.1
