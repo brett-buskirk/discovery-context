@@ -1,0 +1,172 @@
+// The first working page: key entry, model choice, and a plain chat with a one-line log per API call.
+// The timeline, inspector, and charts replace the log in later PRs.
+import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
+import { KeyStore } from "../security/key-store";
+import { el } from "./dom";
+
+export type AppOptions = {
+  /** Injected for tests. Defaults to the global fetch. */
+  fetch?: typeof fetch;
+};
+
+export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
+  const keys = new KeyStore();
+  let session: Session | null = null;
+  let inFlight: AbortController | null = null;
+
+  // ---------- Key panel ----------
+  const keyInput = el("input", {
+    id: "api-key",
+    type: "password",
+    autocomplete: "off",
+    spellcheck: "false",
+    autocapitalize: "off",
+    placeholder: "sk-ant-…",
+    "aria-describedby": "key-note",
+  });
+  const keyError = el("p", { class: "error", role: "alert" });
+  const keyForm = el(
+    "form",
+    { class: "key-form" },
+    el("label", { for: "api-key" }, "Anthropic API key"),
+    el("div", { class: "row" }, keyInput, el("button", { type: "submit" }, "Use this key")),
+    keyError,
+  );
+  const keyStatus = el("p", { class: "key-status" });
+  const forgetButton = el("button", { type: "button", class: "secondary" }, "Forget key");
+  const keyLoaded = el("div", { class: "row key-loaded", hidden: true }, keyStatus, forgetButton);
+
+  const keyNote = el(
+    "p",
+    { id: "key-note", class: "note" },
+    "Your key goes straight from this browser to api.anthropic.com. It's kept in this tab's memory only. " +
+      "It's never saved, and it's gone when you close or reload the page. Use a dedicated key in a workspace " +
+      "with a low spend limit. A short conversation costs a few cents.",
+  );
+
+  // ---------- Model and chat ----------
+  const modelSelect = el(
+    "select",
+    { id: "model" },
+    ...MODELS.map((m) => el("option", { value: m.id }, m.label)),
+  );
+  const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
+  const transcript = el("ol", { class: "transcript", "aria-live": "polite" });
+  const callLog = el("ol", { class: "call-log" });
+  const messageInput = el("input", { id: "message", type: "text", autocomplete: "off", disabled: true });
+  const sendButton = el("button", { type: "submit", disabled: true }, "Send");
+  const chatForm = el(
+    "form",
+    { class: "chat-form" },
+    el("label", { for: "message" }, "Message the Northwind support agent"),
+    el("div", { class: "row" }, messageInput, sendButton),
+  );
+
+  root.replaceChildren(
+    el("h1", {}, "Context Discovery"),
+    el("p", { class: "tagline" }, "See what an AI agent actually sends and receives, one API call at a time."),
+    el("section", { class: "panel", "aria-label": "API key" }, keyForm, keyLoaded, keyNote),
+    el(
+      "section",
+      { class: "panel", "aria-label": "Conversation" },
+      el("div", { class: "row" }, el("label", { for: "model" }, "Model"), modelSelect, newSessionButton),
+      transcript,
+      chatForm,
+    ),
+    el("section", { class: "panel", "aria-label": "API calls" }, el("h2", {}, "API calls"), callLog),
+    el("p", { class: "disclaimer" }, "Unofficial educational project. Not affiliated with or endorsed by Anthropic."),
+  );
+
+  // ---------- Behaviour ----------
+  function setChatEnabled(enabled: boolean) {
+    messageInput.disabled = !enabled;
+    sendButton.disabled = !enabled;
+  }
+
+  function startSession() {
+    inFlight?.abort();
+    inFlight = null;
+    transcript.replaceChildren();
+    callLog.replaceChildren();
+    session = null;
+    setChatEnabled(keys.has());
+  }
+
+  function logCall(call: CallRecord) {
+    const r = call.response;
+    const summary = r
+      ? `#${call.index + 1} (message ${call.turn + 1}) · ${r.stop_reason} · ` +
+        `${call.request.messages.length} messages sent · input ${r.usage.input_tokens} · output ${r.usage.output_tokens} tokens`
+      : `#${call.index + 1} (message ${call.turn + 1}) · failed: ${call.error?.message ?? "unknown error"}`;
+    callLog.append(el("li", {}, summary));
+  }
+
+  function say(who: "you" | "agent" | "system", text: string) {
+    transcript.append(el("li", { class: `msg ${who}` }, el("span", { class: "who" }, `${who}: `), text));
+  }
+
+  function describeStop(outcome: Extract<TurnOutcome, { status: "stopped" }>): string {
+    const why = outcome.reason === "error" ? "The request failed" : `The turn stopped (${outcome.reason})`;
+    return `${why}: ${outcome.detail} This message was removed from the history, so you can try again.`;
+  }
+
+  keyForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const check = keys.set(keyInput.value);
+    keyInput.value = ""; // don't leave the key sitting in the DOM
+    if (!check.ok) {
+      keyError.textContent = check.reason;
+      return;
+    }
+    keyError.textContent = "";
+    keyStatus.textContent = `Key loaded (${keys.describe()}).`;
+    keyForm.hidden = true;
+    keyLoaded.hidden = false;
+    setChatEnabled(true);
+    messageInput.focus();
+  });
+
+  forgetButton.addEventListener("click", () => {
+    inFlight?.abort();
+    keys.clear();
+    session = null;
+    keyLoaded.hidden = true;
+    keyForm.hidden = false;
+    setChatEnabled(false);
+    keyInput.focus();
+  });
+
+  modelSelect.addEventListener("change", startSession);
+  newSessionButton.addEventListener("click", startSession);
+
+  chatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const text = messageInput.value.trim();
+    if (!text || !keys.has()) return;
+
+    session ??= new Session({
+      apiKey: keys.get(),
+      ...(options.fetch ? { fetch: options.fetch } : {}),
+      config: { model: modelSelect.value as ModelId, ...DEFAULT_CONFIG },
+      onCall: logCall,
+    });
+    const current = session;
+    inFlight = new AbortController();
+    messageInput.value = "";
+    setChatEnabled(false);
+    say("you", text);
+
+    try {
+      const outcome = await current.send(text, inFlight.signal);
+      if (session !== current) return; // the conversation was reset while this turn was running
+      if (outcome.status === "done") say("agent", outcome.text);
+      else say("system", describeStop(outcome));
+    } finally {
+      if (session === current) {
+        inFlight = null;
+        setChatEnabled(keys.has());
+        messageInput.focus();
+      }
+    }
+  });
+}

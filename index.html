@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="See what an AI agent actually sends and receives, one API call at a time.">
   <title>Context Discovery</title>
-  <!-- The Content-Security-Policy is added with key entry (see ROADMAP.md), so it gets its own review. -->
+  <!-- The Content-Security-Policy <meta> is added at build time (vite.config.ts, src/security/csp.ts). -->
+  <meta name="referrer" content="no-referrer">
 </head>
 <body>
   <main id="app"></main>

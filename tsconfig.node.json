@@ -3,7 +3,9 @@
   // tsconfig.json so browser code in src/ can't accidentally use Node APIs.
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    // vite.config.ts is loaded by Node directly, which needs the .ts extension on local imports.
+    "allowImportingTsExtensions": true
   },
   "include": ["test", "vite.config.ts"]
 }

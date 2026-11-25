@@ -100,9 +100,17 @@ scenario is the Northwind Outfitters support agent from that build.
   out of `messages` so the conversation stays valid. Its call records are kept.
 - `src/northwind/`: the fictional backend and tools, ported from ccaf-study Build 01. `createBackend()` is a
   factory, so each session and test is isolated.
+- `src/security/csp.ts`: the CSP directives. `vite.config.ts` injects them as the first `<meta>` in the
+  **built** page only (the dev server needs inline scripts). Use `npm run preview` to test under the CSP.
+- `src/security/key-store.ts`: `KeyStore` holds the key in a `#private` field. Nothing else should keep a
+  copy, except `Session`, which also uses a `#private` field.
+- `src/ui/dom.ts`: `el()`, the only way the app builds DOM. Children are text, and `on*` attributes throw.
+- `src/ui/app.ts`: the page (key entry, model picker, chat, call log).
 - `test/`: Vitest tests (jsdom). `test/support/mock-api.ts` is a scripted fake of the Messages API. Use
   it, never the real API. `test/no-runtime-deps.test.ts` fails if anything in `src/` imports
-  runtime code from an npm package. Don't weaken or skip it.
+  runtime code from an npm package. `test/no-html-sinks.test.ts` fails on `innerHTML`, `eval`, and other
+  string-to-HTML or string-to-code APIs. `test/build.test.ts` builds the real page and checks the CSP.
+  Don't weaken or skip any of these.
 - `tsconfig.json` covers browser code (`src/`, DOM types, no Node). `tsconfig.node.json` covers tests and
   `vite.config.ts` (Node types).
 

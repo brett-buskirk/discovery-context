@@ -87,7 +87,8 @@ export class Session {
   readonly calls: CallRecord[] = [];
   readonly turns: Turn[] = [];
   private readonly backend: Backend;
-  private readonly client: Omit<ClientOptions, "signal">;
+  // A private field, not a property, because it holds the API key: it stays out of logs and JSON.
+  readonly #client: Omit<ClientOptions, "signal">;
   private readonly onCall: ((call: CallRecord) => void) | undefined;
   /** messages.length at the time of the previous call; everything before it is being resent. */
   private lastSentCount = 0;
@@ -96,7 +97,7 @@ export class Session {
   constructor({ config, backend, onCall, ...client }: SessionOptions) {
     this.config = config;
     this.backend = createBackend(backend);
-    this.client = client;
+    this.#client = client;
     this.onCall = onCall;
   }
 
@@ -201,7 +202,7 @@ export class Session {
     this.lastSentCount = this.messages.length;
 
     try {
-      const result = await createMessage(request, { ...this.client, ...(signal ? { signal } : {}) });
+      const result = await createMessage(request, { ...this.#client, ...(signal ? { signal } : {}) });
       record.response = result.message;
       record.attempts = result.attempts;
       record.requestId = result.requestId;
