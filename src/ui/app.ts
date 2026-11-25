@@ -1,27 +1,53 @@
 // The page: key entry, model choice, the chat, and the timeline of API calls behind it.
-import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
+import { buildSessionExport, exportFileName, serializeSessionExport, type SessionExport } from "../agent/export";
+import { summarizeConversation, type ConversationSummary } from "../agent/history";
+import {
+  DEFAULT_CONFIG,
+  MODELS,
+  Session,
+  type CallRecord,
+  type ModelId,
+  type SessionConfig,
+  type Turn,
+  type TurnOutcome,
+} from "../agent/session";
+import { PRICING } from "../pricing/cost";
+import { RECORDINGS, loadRecording, type RecordingInfo } from "../recordings";
 import { KeyStore } from "../security/key-store";
 import { el, externalLink } from "./dom";
-import { buildSessionExport, exportFileName, serializeSessionExport } from "../agent/export";
-import { summarizeConversation, type ConversationSummary } from "../agent/history";
 import { renderGrowthPanel } from "./growth-panel";
+import { HANDOFF_TOOL, renderHandoff } from "./handoff";
 import { renderHistoryPanel } from "./history-panel";
+import { renderMarkdown } from "./markdown";
 import { renderSampleSheet } from "./sample-sheet";
 import { renderThemePicker } from "./theme";
+import { renderCall, renderTurn } from "./timeline";
 
 export const SOURCE_URL = "https://github.com/brett-buskirk/discovery-context";
-import { HANDOFF_TOOL, renderHandoff } from "./handoff";
-import { renderMarkdown } from "./markdown";
-import { renderCall, renderTurn } from "./timeline";
+
+/** What the panels render from: a live Session, or a recording being replayed. */
+type Conversation = { config: SessionConfig; calls: readonly CallRecord[]; turns: readonly Turn[] };
+
+/** A recording being played back. Calls and turns are revealed one at a time. */
+type Replay = { info: RecordingInfo; data: SessionExport; calls: CallRecord[]; turns: Turn[] };
+
+/** Pause between replayed steps, so the timeline and chart build up the way they did live. */
+const REPLAY_STEP_MS = 700;
 
 export type AppOptions = {
   /** Injected for tests. Defaults to the global fetch. */
   fetch?: typeof fetch;
+  /** Injected for tests. Pause between replay steps. */
+  replayDelay?: (ms: number) => Promise<void>;
 };
 
 export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   const keys = new KeyStore();
   let session: Session | null = null;
+  let replay: Replay | null = null;
+  // Bumped whenever the view resets, so a replay still stepping in the background stops.
+  let replayToken = 0;
+  let replaySkip = false;
   let inFlight: AbortController | null = null;
 
   // ---------- Key panel ----------
@@ -51,7 +77,8 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     { id: "key-note", class: "note" },
     "Your key goes straight from this browser to api.anthropic.com. It's kept in this tab's memory only. " +
       "It's never saved, and it's gone when you close or reload the page. Use a dedicated key in a workspace " +
-      "with a low spend limit. A short conversation costs a few cents.",
+      "with a low spend limit. A short conversation costs a few cents. No key? You can still watch a recorded " +
+      "conversation in the next section.",
   );
 
   // ---------- Model and chat ----------
@@ -74,6 +101,28 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   let currentTurn: ReturnType<typeof renderTurn> | null = null;
   const messageInput = el("input", { id: "message", type: "text", autocomplete: "off", disabled: true });
   const sendButton = el("button", { type: "submit", disabled: true }, "Send");
+  // ---------- Recordings ----------
+  const recordingList = el(
+    "ul",
+    { class: "recordings" },
+    ...RECORDINGS.map((info) => {
+      const button = el("button", { type: "button", class: "secondary" }, "Watch");
+      button.addEventListener("click", () => void playRecording(info));
+      return el(
+        "li",
+        {},
+        el("div", { class: "scenario-head" }, el("strong", {}, info.title), button),
+        el("p", { class: "note" }, `${modelLabel(info.model)}. ${info.description}`),
+      );
+    }),
+  );
+  const replayText = el("p", {});
+  const skipButton = el("button", { type: "button", class: "secondary" }, "Show all now");
+  const replayBanner = el("div", { class: "replay-banner", role: "status", hidden: true }, replayText, skipButton);
+  skipButton.addEventListener("click", () => {
+    replaySkip = true;
+  });
+
   const chatForm = el(
     "form",
     { class: "chat-form" },
@@ -108,6 +157,18 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
         if (!messageInput.disabled) messageInput.focus();
       }),
       el(
+        "details",
+        { class: "sample-sheet recordings-panel", open: true },
+        el("summary", {}, "Recorded conversations (no key needed)"),
+        el(
+          "p",
+          { class: "note" },
+          "Real conversations, recorded on this page and played back here. Nothing is sent to the API during a " +
+            "replay, so it's free. Everything below the chat fills in just as it did live.",
+        ),
+        recordingList,
+      ),
+      el(
         "div",
         { class: "chat-card" },
         el(
@@ -121,6 +182,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
           { class: "chat-sub" },
           "A fictional store's support agent, running on the model you picked. Sample data only.",
         ),
+        replayBanner,
         transcript,
         chatForm,
       ),
@@ -162,8 +224,18 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     sendButton.disabled = !enabled;
   }
 
+  function modelLabel(id: string): string {
+    return MODELS.find((m) => m.id === id)?.label ?? id;
+  }
+
+  function current(): Conversation | null {
+    if (session) return session;
+    return replay ? { config: replay.data.config, calls: replay.calls, turns: replay.turns } : null;
+  }
+
   function currentSummary(): ConversationSummary | null {
-    return session ? summarizeConversation(conversationNumber, session.config.model, session.calls, session.turns) : null;
+    const c = current();
+    return c ? summarizeConversation(conversationNumber, c.config.model, c.calls, c.turns, !session && !!replay) : null;
   }
 
   function renderHistory() {
@@ -181,12 +253,15 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       conversationNumber++;
     }
     session = null;
+    replay = null;
   }
 
   function startSession() {
     inFlight?.abort();
     inFlight = null;
+    replayToken++;
     archiveSession();
+    replayBanner.hidden = true;
     transcript.replaceChildren();
     timeline.replaceChildren();
     currentTurn = null;
@@ -197,7 +272,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   }
 
   function updateExportButton() {
-    exportButton.disabled = !session || session.calls.length === 0;
+    exportButton.disabled = (current()?.calls.length ?? 0) === 0;
   }
 
   function logCall(call: CallRecord) {
@@ -210,8 +285,79 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
         scrollToEnd();
       }
     }
-    if (session) renderGrowthPanel(growth, session.calls, session.config.model);
+    const c = current();
+    if (c) renderGrowthPanel(growth, c.calls, c.config.model);
     renderHistory();
+  }
+
+  /** Shows how a turn ended, in the chat and on its timeline group. Shared by live turns and replays. */
+  function finishTurn(view: ReturnType<typeof renderTurn>, outcome: TurnOutcome) {
+    if (outcome.status === "done") {
+      say("agent", outcome.text);
+    } else {
+      say("system", describeStop(outcome));
+      view.root.classList.add("rolled-back");
+      view.status.textContent =
+        "This message was rolled back: it and these calls are no longer part of the history sent to the model.";
+    }
+  }
+
+  function prefersReducedMotion(): boolean {
+    return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  /** Waits between replay steps. Returns false if the replay was cancelled while waiting. */
+  async function step(token: number): Promise<boolean> {
+    if (!replaySkip && !prefersReducedMotion()) {
+      await (options.replayDelay ?? ((ms) => new Promise((r) => setTimeout(r, ms))))(REPLAY_STEP_MS);
+    }
+    return token === replayToken;
+  }
+
+  async function playRecording(info: RecordingInfo) {
+    startSession();
+    const token = replayToken;
+    replaySkip = false;
+    let data: SessionExport;
+    try {
+      data = await loadRecording(info.id);
+    } catch (err) {
+      say("system", `Couldn't load the recording: ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+    if (token !== replayToken) return;
+
+    const playing: Replay = { info, data, calls: [], turns: [] };
+    replay = playing;
+    modelSelect.value = data.config.model;
+    const recordedOn = data.exportedAt.slice(0, 10);
+    replayText.textContent =
+      `Replaying a recorded conversation: “${info.title}” on ${modelLabel(data.config.model)}, recorded ` +
+      `${recordedOn}. Nothing is being sent to the API. Token counts are from the original run; costs use ` +
+      `today's list prices (as of ${PRICING.asOf}).`;
+    skipButton.hidden = false;
+    replayBanner.hidden = false;
+    setChatEnabled(false);
+
+    for (const turn of data.turns) {
+      if (!(await step(token))) return;
+      say("you", turn.userText);
+      const view = renderTurn(turn.index, turn.userText);
+      currentTurn = view;
+      timeline.append(view.root);
+      playing.turns.push(turn);
+      for (const call of data.calls.filter((c) => c.turn === turn.index)) {
+        if (!(await step(token))) return;
+        playing.calls.push(call);
+        logCall(call);
+      }
+      if (turn.outcome) finishTurn(view, turn.outcome);
+    }
+
+    skipButton.hidden = true;
+    replayText.textContent += " Replay finished.";
+    // The visitor can continue live with their own key; their message starts a new conversation.
+    setChatEnabled(keys.has());
   }
 
   const SPEAKERS = { you: "You", agent: "Northwind agent", system: "Note" } as const;
@@ -262,10 +408,11 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   newSessionButton.addEventListener("click", startSession);
 
   exportButton.addEventListener("click", () => {
-    if (!session || session.calls.length === 0) return;
-    const json = serializeSessionExport(buildSessionExport(session), keys.has() ? keys.get() : undefined);
+    const c = current();
+    if (!c || c.calls.length === 0) return;
+    const json = serializeSessionExport(buildSessionExport(c), keys.has() ? keys.get() : undefined);
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
-    const link = el("a", { href: url, download: exportFileName(session.config.model) });
+    const link = el("a", { href: url, download: exportFileName(c.config.model) });
     link.click();
     // Give the browser a moment to start the download before releasing the object URL.
     setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -275,6 +422,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     event.preventDefault();
     const text = messageInput.value.trim();
     if (!text || !keys.has()) return;
+    if (replay) startSession(); // a live message after a replay starts a fresh conversation
 
     session ??= new Session({
       apiKey: keys.get(),
@@ -282,28 +430,21 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       config: { model: modelSelect.value as ModelId, ...DEFAULT_CONFIG },
       onCall: logCall,
     });
-    const current = session;
+    const live = session;
     inFlight = new AbortController();
     messageInput.value = "";
     setChatEnabled(false);
     say("you", text);
-    const turn = renderTurn(current.turns.length, text);
+    const turn = renderTurn(live.turns.length, text);
     currentTurn = turn;
     timeline.append(turn.root);
 
     try {
-      const outcome = await current.send(text, inFlight.signal);
-      if (session !== current) return; // the conversation was reset while this turn was running
-      if (outcome.status === "done") {
-        say("agent", outcome.text);
-      } else {
-        say("system", describeStop(outcome));
-        turn.root.classList.add("rolled-back");
-        turn.status.textContent =
-          "This message was rolled back: it and these calls are no longer part of the history sent to the model.";
-      }
+      const outcome = await live.send(text, inFlight.signal);
+      if (session !== live) return; // the conversation was reset while this turn was running
+      finishTurn(turn, outcome);
     } finally {
-      if (session === current) {
+      if (session === live) {
         inFlight = null;
         setChatEnabled(keys.has());
         messageInput.focus();
