@@ -120,6 +120,9 @@ scenario is the Northwind Outfitters support agent from that build.
   one-hue blue ramp checked with the dataviz palette validator in both modes (`--viz-*` in `styles.css`).
 - `src/agent/history.ts` and `src/ui/history-panel.ts`: per-conversation summaries (numbers only, never
   message text or the key) kept in page memory for the comparison table. They're never persisted.
+- `src/northwind/scenarios.ts` and `src/ui/sample-sheet.ts`: scenarios to try and the on-page sample-data
+  reference, read from `data.ts`. `test/scenarios.test.ts` fails if a scenario names a customer or order
+  that doesn't exist, or if its claim about the data stops being true. Update both together.
 - `src/ui/handoff.ts`: the escalation card shown in the transcript when `escalate_to_human` runs.
 - `src/ui/timeline.ts`: the timeline and inspector. Calls are grouped under the user message that caused
   them. Each call shows its headers (key replaced by a placeholder), settings, `system`, `tools`, and every

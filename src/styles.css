@@ -236,3 +236,18 @@ pre.json {
 .history-table tbody tr.current { font-weight: 600; }
 .history-table td:nth-child(2), .history-table thead th:nth-child(2) { text-align: left; }
 .history-table td:nth-child(3) { text-align: left; }
+
+/* ---------- Sample-data sheet ---------- */
+.sample-sheet { margin: 0.75rem 0; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); padding: 0.5rem 0.75rem; }
+.sample-sheet > summary { cursor: pointer; font-weight: 600; }
+.sample-sheet h3 { font-size: 1rem; margin: 0.75rem 0 0.25rem; }
+.scenarios { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.scenarios li { border: 1px solid var(--line); border-radius: 6px; padding: 0.5rem 0.75rem; background: var(--sheet); }
+.scenario-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.scenario-head button { padding: 0.2rem 0.6rem; font-size: 0.85rem; }
+.scenario-prompt { font-family: var(--read); margin: 0.35rem 0; }
+.scenarios .note { margin: 0; font-size: 0.85rem; }
+.sample-table { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
+.sample-table caption { text-align: left; font-weight: 600; margin: 0 0 0.25rem; }
+.sample-table th, .sample-table td { text-align: left; vertical-align: top; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--line); }
+.order-list { margin: 0; padding-left: 1rem; }

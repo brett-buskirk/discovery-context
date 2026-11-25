@@ -5,6 +5,7 @@ import { el } from "./dom";
 import { summarizeConversation, type ConversationSummary } from "../agent/history";
 import { renderGrowthPanel } from "./growth-panel";
 import { renderHistoryPanel } from "./history-panel";
+import { renderSampleSheet } from "./sample-sheet";
 import { HANDOFF_TOOL, renderHandoff } from "./handoff";
 import { renderCall, renderTurn } from "./timeline";
 
@@ -81,6 +82,10 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       "section",
       { class: "panel", "aria-label": "Conversation" },
       el("div", { class: "row" }, el("label", { for: "model" }, "Model"), modelSelect, newSessionButton),
+      renderSampleSheet((prompt) => {
+        messageInput.value = prompt;
+        if (!messageInput.disabled) messageInput.focus();
+      }),
       transcript,
       chatForm,
     ),
