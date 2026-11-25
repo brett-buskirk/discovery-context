@@ -11,7 +11,7 @@ export type ClientOptions = {
   /** Injected for tests. Defaults to the global fetch. */
   fetch?: typeof fetch;
   /** Injected for tests so retries don't actually wait. */
-  sleep?: (ms: number) => Promise<void>;
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
   maxRetries?: number;
   signal?: AbortSignal;
 };
@@ -43,7 +43,24 @@ export class ApiError extends Error {
   }
 }
 
-const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** Waits between retries, but gives up at once if the request is cancelled (up to 8 s otherwise). */
+const defaultSleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(abortError(signal));
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(abortError(signal));
+      },
+      { once: true },
+    );
+  });
+
+function abortError(signal: AbortSignal): unknown {
+  return signal.reason ?? new DOMException("The request was cancelled.", "AbortError");
+}
 
 export function buildHeaders(apiKey: string): Record<string, string> {
   return {
@@ -113,7 +130,8 @@ export async function createMessage(
       const detail = err instanceof Error ? err.message : String(err);
       attempts.push({ status: null, durationMs: performance.now() - started, requestId: null, error: detail });
       if (retry < maxRetries) {
-        await sleep(retryDelayMs(null, retry));
+        await sleep(retryDelayMs(null, retry), signal);
+        if (signal?.aborted) throw abortError(signal);
         continue;
       }
       throw new ApiError(`Network error: ${detail}`, null, "network_error", null, attempts);
@@ -130,7 +148,8 @@ export async function createMessage(
     const error = await readError(response);
     attempts.push({ status: response.status, durationMs, requestId, error: error.message });
     if (retry < maxRetries && shouldRetry(response.status, response.headers)) {
-      await sleep(retryDelayMs(response.headers, retry));
+      await sleep(retryDelayMs(response.headers, retry), signal);
+      if (signal?.aborted) throw abortError(signal);
       continue;
     }
     throw new ApiError(error.message, response.status, error.type, requestId, attempts);

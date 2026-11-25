@@ -108,7 +108,8 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/agent/session.ts`: the hand-written agent loop. `Session.send()` runs one user turn and keeps a
   `CallRecord` per API call: a deep-copied request snapshot, the response, attempts, tool runs, and
   `resentMessageCount`. A turn that can't finish (refusal, `max_tokens`, error, call limit) is rolled back
-  out of `messages` so the conversation stays valid. Its call records are kept.
+  out of `messages` so the conversation stays valid. Its call records are kept. Cancelling (the Stop button's
+  `AbortSignal`) is checked before every call and during retry waits. It ends the turn as `cancelled`.
 - `src/northwind/`: the fictional backend and tools, ported from ccaf-study Build 01 and extended.
   `data.ts` is the single source of the sample data: customers and orders, with dates stored as days ago.
   The first three customers and orders are the Build 01 originals; keep them unchanged. `createBackend()`

@@ -66,7 +66,7 @@ export type CallRecord = {
 export type TurnOutcome =
   | { status: "done"; text: string }
   /** The turn ended early. Its messages are removed from the history so the conversation stays valid. */
-  | { status: "stopped"; reason: StopReason | "error" | "call_limit"; detail: string };
+  | { status: "stopped"; reason: StopReason | "error" | "call_limit" | "cancelled"; detail: string };
 
 export type Turn = { index: number; userText: string; outcome: TurnOutcome | null };
 
@@ -75,6 +75,12 @@ export type SessionOptions = Omit<ClientOptions, "signal"> & {
   backend?: BackendOptions;
   /** Called after each API call completes (or fails), so the UI can update as the loop runs. */
   onCall?: (call: CallRecord) => void;
+};
+
+const CANCELLED: TurnOutcome = {
+  status: "stopped",
+  reason: "cancelled",
+  detail: "You stopped this message.",
 };
 
 const textOf = (message: Message) =>
@@ -127,8 +133,11 @@ export class Session {
     this.messages.push({ role: "user", content: userText });
 
     for (let callsThisTurn = 0; callsThisTurn < this.config.maxCallsPerTurn; callsThisTurn++) {
+      // Checked before every call, so stopping between tool rounds doesn't start another request.
+      if (signal?.aborted) return CANCELLED;
       const call = await this.call(turn, signal);
       const response = call.response;
+      if (signal?.aborted && !response) return CANCELLED;
       if (!response) {
         return { status: "stopped", reason: "error", detail: call.error?.message ?? "Request failed" };
       }
@@ -207,7 +216,15 @@ export class Session {
       record.attempts = result.attempts;
       record.requestId = result.requestId;
     } catch (err) {
-      if (err instanceof ApiError) {
+      if (signal?.aborted) {
+        // The page stopped waiting. The API may already have been working on it, and can bill for that,
+        // but no usage numbers ever come back, so the page can't show them.
+        record.error = {
+          message: "Cancelled before a response arrived. The API may still bill for work it had already done.",
+          status: null,
+          type: "cancelled",
+        };
+      } else if (err instanceof ApiError) {
         record.error = { message: err.message, status: err.status, type: err.errorType };
         record.attempts = err.attempts;
         record.requestId = err.requestId;

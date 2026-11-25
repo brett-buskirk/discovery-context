@@ -101,6 +101,9 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   let currentTurn: ReturnType<typeof renderTurn> | null = null;
   const messageInput = el("input", { id: "message", type: "text", autocomplete: "off", disabled: true });
   const sendButton = el("button", { type: "submit", disabled: true }, "Send");
+  // Shown only while a message is running. The agent can make up to 10 calls for one message, and each one
+  // is billed, so the visitor needs a way out.
+  const stopButton = el("button", { type: "button", class: "stop", hidden: true }, "Stop");
   // ---------- Recordings ----------
   const recordingList = el(
     "ul",
@@ -127,7 +130,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     "form",
     { class: "chat-form" },
     el("label", { for: "message" }, "Message the Northwind support agent"),
-    el("div", { class: "row" }, messageInput, sendButton),
+    el("div", { class: "row" }, messageInput, sendButton, stopButton),
   );
 
   root.replaceChildren(
@@ -260,6 +263,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     inFlight?.abort();
     inFlight = null;
     replayToken++;
+    stopButton.hidden = true;
     archiveSession();
     replayBanner.hidden = true;
     transcript.replaceChildren();
@@ -375,6 +379,12 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   }
 
   function describeStop(outcome: Extract<TurnOutcome, { status: "stopped" }>): string {
+    if (outcome.reason === "cancelled") {
+      return (
+        "You stopped this message, so it was removed from the history. If a request was already in progress, " +
+        "the API may still bill for it, but no usage numbers came back, so they aren't counted here."
+      );
+    }
     const why = outcome.reason === "error" ? "The request failed" : `The turn stopped (${outcome.reason})`;
     return `${why}: ${outcome.detail} This message was removed from the history, so you can try again.`;
   }
@@ -402,6 +412,11 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     keyForm.hidden = false;
     setChatEnabled(false);
     keyInput.focus();
+  });
+
+  stopButton.addEventListener("click", () => {
+    inFlight?.abort();
+    stopButton.disabled = true; // the loop notices on its next step; avoid double clicks meanwhile
   });
 
   modelSelect.addEventListener("change", startSession);
@@ -434,6 +449,8 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     inFlight = new AbortController();
     messageInput.value = "";
     setChatEnabled(false);
+    stopButton.hidden = false;
+    stopButton.disabled = false;
     say("you", text);
     const turn = renderTurn(live.turns.length, text);
     currentTurn = turn;
@@ -446,6 +463,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     } finally {
       if (session === live) {
         inFlight = null;
+        stopButton.hidden = true;
         setChatEnabled(keys.has());
         messageInput.focus();
       }
