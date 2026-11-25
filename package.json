@@ -1,7 +1,7 @@
 {
   "name": "discovery-context",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Context Discovery: see what an AI agent actually sends and receives, one API call at a time.",
   "license": "MIT",
   "type": "module",

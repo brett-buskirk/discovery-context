@@ -6,9 +6,10 @@ All notable changes to discovery-context are documented here. The format is base
 
 ## [Unreleased]
 
-### Changed
-- The conversation sits in its own scrolling chat card with message bubbles, labelled as a simulated
-  Northwind Outfitters support agent.
+## [0.1.2] - 2026-11-25
+
+Recorded conversations anyone can watch without a key, prompt caching mode, a Stop button, themes,
+formatted replies, conversation export, and link previews.
 
 ### Added
 - Link previews (Open Graph and Twitter card tags) with a preview image, a favicon, and a canonical URL.
@@ -30,6 +31,11 @@ All notable changes to discovery-context are documented here. The format is base
   in localStorage (the theme name only) and applied before first paint.
 - A note at the top of the page explaining that the agent is a simulated, single-purpose support agent
   for a made-up store, not a general chatbot.
+- Dependabot: weekly update PRs for npm devDependencies and the pinned GitHub Actions.
+
+### Changed
+- The conversation sits in its own scrolling chat card with message bubbles, labelled as a simulated
+  Northwind Outfitters support agent.
 
 ## [0.1.1] - 2026-11-25
 
@@ -64,5 +70,6 @@ First public release. Live at https://brett-buskirk.github.io/discovery-context/
 - Documentation pass: README describes the live site and what it shows; ROADMAP, CONTRIBUTING, and
   `CLAUDE.md` brought in line with what's built.
 
-[Unreleased]: https://github.com/brett-buskirk/discovery-context/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/brett-buskirk/discovery-context/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/brett-buskirk/discovery-context/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/brett-buskirk/discovery-context/releases/tag/v0.1.1
