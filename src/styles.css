@@ -332,10 +332,14 @@ pre.json {
 .swatch { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px; }
 .swatch.seg-resent { background: var(--viz-resent); }
 .swatch.seg-new { background: var(--viz-new); }
+.swatch.seg-cached {
+  background: repeating-linear-gradient(45deg, var(--viz-resent) 0 3px, var(--sheet) 3px 5px);
+}
 
 .growth-chart { width: 100%; height: auto; display: block; }
 .growth-chart .seg-resent { fill: var(--viz-resent); }
 .growth-chart .seg-new { fill: var(--viz-new); }
+.growth-chart .hatch-line { stroke: var(--sheet); stroke-width: 2.5; }
 .growth-chart .grid { stroke: var(--line); stroke-width: 1; opacity: 0.6; }
 .growth-chart .axis { stroke: var(--muted); stroke-width: 1; }
 .growth-chart .tick, .growth-chart .axis-label { fill: var(--muted); font: 11px var(--ui); }

@@ -27,7 +27,8 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [x] Chat card and a "this is a simulation" note.
 - [ ] Per-segment token counts from `count_tokens`: how much of each request is the system prompt and tool
       definitions, compared with the ~4-characters-per-token rule of thumb.
-- [ ] Prompt caching mode with real `cache_read` / `cache_creation` numbers.
+- [x] Prompt caching mode with real `cache_read` / `cache_creation` numbers.
+- [x] Stop button for a running message.
 - [ ] What-if comparisons, clearly labelled as estimates: prompt caching on or off, trimmed tool results,
       other models' prices.
 - [x] Session export (JSON, never including the key or headers).

@@ -21,6 +21,8 @@ and shows every request and response as it happens.
 - **Tokens and cost.** Per call and running totals, from the API's own `usage` numbers, priced at list
   prices with the date and source shown. The "Paid for the context" figure shows how many times over you've
   paid for the conversation by resending it.
+- **Prompt caching.** Turn it on to see the history still sent in full on every call, with the cached part
+  billed at a fraction of the input price, and compare the cost against a run without it.
 - **What a human reviewer receives.** When the agent escalates, a card shows the exact handoff fields.
 - **Themes.** Auto (matches your system), Light, Dark, Sepia, and High contrast.
 - **Model comparisons.** Switch between Claude Sonnet 5.5, Opus 5.5, and Haiku 5.5. Each conversation's

@@ -20,6 +20,8 @@ export type ConversationSummary = {
   priced: boolean;
   /** True for a replayed recording rather than a live conversation. */
   recorded: boolean;
+  /** Whether prompt caching was on. */
+  caching: boolean;
 };
 
 export function summarizeConversation(
@@ -28,6 +30,7 @@ export function summarizeConversation(
   calls: readonly CallRecord[],
   turns: readonly Turn[],
   recorded = false,
+  caching = false,
 ): ConversationSummary {
   const growth = analyzeGrowth(calls);
   return {
@@ -44,5 +47,6 @@ export function summarizeConversation(
     cost: growth.totalCost,
     priced: !growth.unpriced,
     recorded,
+    caching,
   };
 }

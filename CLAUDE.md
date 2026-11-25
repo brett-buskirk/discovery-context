@@ -110,6 +110,8 @@ scenario is the Northwind Outfitters support agent from that build.
   `resentMessageCount`. A turn that can't finish (refusal, `max_tokens`, error, call limit) is rolled back
   out of `messages` so the conversation stays valid. Its call records are kept. Cancelling (the Stop button's
   `AbortSignal`) is checked before every call and during retry waits. It ends the turn as `cancelled`.
+  `SessionConfig.caching` adds a top-level `cache_control: {type: "ephemeral"}` (automatic caching: the
+  breakpoint follows the end of the conversation). Exports from before this flag existed parse as caching off.
 - `src/northwind/`: the fictional backend and tools, ported from ccaf-study Build 01 and extended.
   `data.ts` is the single source of the sample data: customers and orders, with dates stored as days ago.
   The first three customers and orders are the Build 01 originals; keep them unchanged. `createBackend()`
@@ -126,7 +128,9 @@ scenario is the Northwind Outfitters support agent from that build.
   output; Haiku 5.5's >100K tier counts cache tokens toward the threshold) and `formatUsd()`.
 - `src/agent/growth.ts`: `analyzeGrowth()`. A call's "sent before" is the prompt of the latest earlier call
   whose request it starts with, and "new" is the difference. That split is derived from measured totals,
-  and the UI says so.
+  and the UI says so. It also reports cache reads and writes per call (measured), and `costWithoutCaching`, which is an
+  estimate: the same tokens priced as plain input. The chart hatches the cached part of "sent before" (a
+  texture, not a third colour).
 - `src/ui/growth-panel.ts` and `src/ui/svg.ts`: headline tiles, the stacked SVG bar chart (a native `<title>`
   tooltip per bar), and the per-call table, which is the chart's accessible view. Chart colours are a
   one-hue blue ramp checked with the dataviz palette validator in both modes (`--viz-*` in `styles.css`).

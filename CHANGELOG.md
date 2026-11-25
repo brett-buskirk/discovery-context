@@ -11,6 +11,9 @@ All notable changes to discovery-context are documented here. The format is base
   Northwind Outfitters support agent.
 
 ### Added
+- Prompt caching mode: a per-conversation toggle that turns on automatic caching. The panel shows
+  cache reads and writes per call, hatches the cached part of the chart, and estimates the cost without
+  caching. The comparison table labels cached conversations.
 - A Stop button while a message is running. It cancels the request in progress (including a wait
   between retries), starts no further calls, rolls the message back, and explains that a cancelled
   request may still be billed.

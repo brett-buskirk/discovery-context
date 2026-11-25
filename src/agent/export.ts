@@ -75,5 +75,6 @@ export function parseSessionExport(value: unknown): SessionExport {
       throw new Error("The export has a call that doesn't match its turns.");
     }
   }
-  return v as SessionExport;
+  // Exports made before prompt caching existed have no caching flag. They ran without it.
+  return { ...(v as SessionExport), config: { ...v.config, caching: v.config.caching ?? false } };
 }
