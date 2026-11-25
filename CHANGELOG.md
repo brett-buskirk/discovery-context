@@ -29,3 +29,8 @@ All notable changes to discovery-context are documented here. The format is base
 - Sample-data sheet: a collapsible on-page reference of every customer and order, plus ten scenarios
   that put a ready-made message in the box.
 - CI workflow: typecheck, tests, build, and a check that no SDK code ships in the bundle.
+- GitHub Pages deployment on merge to `main`, behind the same checks as CI.
+
+### Changed
+- Documentation pass: README describes the live site and what it shows; ROADMAP, CONTRIBUTING, and
+  `CLAUDE.md` brought in line with what's built.
