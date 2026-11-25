@@ -139,6 +139,10 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/northwind/scenarios.ts` and `src/ui/sample-sheet.ts`: scenarios to try and the on-page sample-data
   reference, read from `data.ts`. `test/scenarios.test.ts` fails if a scenario names a customer or order
   that doesn't exist, or if its claim about the data stops being true. Update both together.
+- `public/og-image.png` and `public/favicon.svg`: the link-preview image (1200×630) and favicon. The
+  image is drawn by `scripts/make-og-image.py` (Pillow and Lato, run by hand, not part of the build) from
+  the dark theme and the long-order-history recording's real numbers. The Open Graph and Twitter tags in
+  `index.html` need absolute URLs.
 - `src/ui/theme.ts` and `public/theme-init.js`: the theme picker, and a classic script loaded in `<head>`
   that applies the saved theme before first paint. It's a file, not inline, because the CSP blocks inline
   scripts. Both list the same themes (tested).

@@ -3,8 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="See what an AI agent actually sends and receives, one API call at a time.">
+  <meta name="description" content="See what an AI agent actually sends and receives, one API call at a time. Every Claude API call, the full history resent each time, and the token cost as context grows.">
   <title>Context Discovery</title>
+  <link rel="canonical" href="https://brett-buskirk.github.io/discovery-context/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <!-- Link previews (Open Graph, used by LinkedIn, Slack, and others; plus the X/Twitter card). Image URLs
+       must be absolute. The image is drawn by scripts/make-og-image.py. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AI Discovery">
+  <meta property="og:title" content="Context Discovery">
+  <meta property="og:description" content="See what an AI agent actually sends and receives, one API call at a time: every Claude API call, the full history resent each time, and the token cost as context grows.">
+  <meta property="og:url" content="https://brett-buskirk.github.io/discovery-context/">
+  <meta property="og:image" content="https://brett-buskirk.github.io/discovery-context/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Context Discovery: a bar chart of input tokens per API call, each bar taller than the last because the whole history is resent.">
+  <meta name="twitter:card" content="summary_large_image">
   <!-- The Content-Security-Policy <meta> is added at build time (vite.config.ts, src/security/csp.ts). -->
   <meta name="referrer" content="no-referrer">
   <!-- Blocking on purpose: applies the saved theme before first paint. -->
