@@ -14,6 +14,15 @@ export type CallGrowth = {
   sentBefore: number;
   /** prompt - sentBefore: what this call added. */
   added: number;
+  /** Prompt tokens served from the cache (billed at the cache-read price). Measured. */
+  cacheRead: number;
+  /** Prompt tokens written to the cache this call (billed at the cache-write price). Measured. */
+  cacheWrite: number;
+  /**
+   * The part of sentBefore that came from the cache, for the chart: min(sentBefore, cacheRead). The rest of
+   * sentBefore was resent at full price.
+   */
+  sentBeforeCached: number;
   /**
    * True when the subtraction came out negative and was clamped to 0. This can happen if the API counts
    * an earlier part of the history differently later on (for example, older thinking blocks).
@@ -36,6 +45,15 @@ export type GrowthSummary = {
   resendMultiplier: number | null;
   /** True if any call used a model the price table doesn't cover. */
   unpriced: boolean;
+  totalCacheRead: number;
+  totalCacheWrite: number;
+  /** True if any call read from or wrote to the cache. */
+  cachingUsed: boolean;
+  /**
+   * An estimate: the same prompt and output tokens priced as plain input, with no cache. The token counts
+   * would be identical without caching; only the prices differ. Null if a model isn't priced.
+   */
+  costWithoutCaching: number | null;
 };
 
 const sameRequestPrefix = (earlier: CallRecord, later: CallRecord): boolean => {
@@ -65,6 +83,8 @@ export function analyzeGrowth(calls: readonly CallRecord[]): GrowthSummary {
     const raw = base ? prompt - base.prompt : prompt;
     const sentBefore = base ? Math.min(base.prompt, prompt) : 0;
 
+    const cacheRead = usage.cache_read_input_tokens ?? 0;
+    const cacheWrite = usage.cache_creation_input_tokens ?? 0;
     const cost = costOf(call.request.model, usage);
     if (!cost) unpriced = true;
     runningCost += cost?.total ?? 0;
@@ -76,6 +96,9 @@ export function analyzeGrowth(calls: readonly CallRecord[]): GrowthSummary {
       sentBefore,
       added: Math.max(raw, 0),
       clamped: raw < 0,
+      cacheRead,
+      cacheWrite,
+      sentBeforeCached: Math.min(sentBefore, cacheRead),
       output: usage.output_tokens,
       cost,
       runningCost,
@@ -84,6 +107,18 @@ export function analyzeGrowth(calls: readonly CallRecord[]): GrowthSummary {
   }
 
   const latestPrompt = out.at(-1)?.prompt ?? 0;
+  const totalCacheRead = out.reduce((sum, g) => sum + g.cacheRead, 0);
+  const totalCacheWrite = out.reduce((sum, g) => sum + g.cacheWrite, 0);
+  const uncachedCosts = out.map(
+    (g) =>
+      costOf(g.call.request.model, {
+        ...g.call.response!.usage,
+        input_tokens: g.prompt,
+        cache_read_input_tokens: 0,
+        cache_creation_input_tokens: 0,
+        cache_creation: null,
+      })?.total ?? null,
+  );
   return {
     calls: out,
     totalPrompt: runningPrompt,
@@ -92,5 +127,11 @@ export function analyzeGrowth(calls: readonly CallRecord[]): GrowthSummary {
     latestPrompt,
     resendMultiplier: latestPrompt > 0 ? runningPrompt / latestPrompt : null,
     unpriced,
+    totalCacheRead,
+    totalCacheWrite,
+    cachingUsed: totalCacheRead + totalCacheWrite > 0,
+    costWithoutCaching: uncachedCosts.includes(null)
+      ? null
+      : uncachedCosts.reduce<number>((sum, c) => sum + (c ?? 0), 0),
   };
 }

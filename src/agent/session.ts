@@ -28,6 +28,12 @@ export type SessionConfig = {
    * Sonnet 5.5). Fixing it keeps model comparisons fair. Thinking is left at each model's default.
    */
   effort: Effort;
+  /**
+   * Prompt caching. When on, each request carries a top-level cache_control, which caches everything up
+   * to the last block and moves that point forward as the conversation grows. The history is still sent in
+   * full every time; the cached part is just billed at the cache-read price.
+   */
+  caching: boolean;
   maxTokens: number;
   /** A fuse, not a thermostat: the loop ends on stop_reason, and this only stops a runaway turn. */
   maxCallsPerTurn: number;
@@ -35,6 +41,7 @@ export type SessionConfig = {
 
 export const DEFAULT_CONFIG: Omit<SessionConfig, "model"> = {
   effort: "medium",
+  caching: false,
   maxTokens: 16_000,
   maxCallsPerTurn: 10,
 };
@@ -193,6 +200,7 @@ export class Session {
       system: SYSTEM_PROMPT,
       tools: TOOL_DEFS,
       output_config: { effort: this.config.effort },
+      ...(this.config.caching ? { cache_control: { type: "ephemeral" as const } } : {}),
       messages: this.messages,
     });
     const record: CallRecord = {

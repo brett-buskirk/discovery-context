@@ -87,6 +87,12 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     { id: "model" },
     ...MODELS.map((m) => el("option", { value: m.id }, m.label)),
   );
+  const cachingSelect = el(
+    "select",
+    { id: "caching" },
+    el("option", { value: "off" }, "Off"),
+    el("option", { value: "on" }, "On"),
+  );
   const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
   const exportButton = el("button", { type: "button", class: "secondary", disabled: true }, "Export conversation (JSON)");
   // The conversation scrolls inside its own card, so a long chat doesn't push everything else down.
@@ -154,7 +160,23 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     el(
       "section",
       { class: "panel", "aria-label": "Conversation" },
-      el("div", { class: "row" }, el("label", { for: "model" }, "Model"), modelSelect, newSessionButton, exportButton),
+      el(
+        "div",
+        { class: "row" },
+        el("label", { for: "model" }, "Model"),
+        modelSelect,
+        el("label", { for: "caching" }, "Prompt caching"),
+        cachingSelect,
+        newSessionButton,
+        exportButton,
+      ),
+      el(
+        "p",
+        { class: "note" },
+        "Changing the model or prompt caching starts a new conversation, so each one is a fair comparison. " +
+          "With caching on, the history is still sent every time, but the part the API has cached is billed " +
+          "at a fraction of the input price.",
+      ),
       renderSampleSheet((prompt) => {
         messageInput.value = prompt;
         if (!messageInput.disabled) messageInput.focus();
@@ -238,7 +260,9 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
 
   function currentSummary(): ConversationSummary | null {
     const c = current();
-    return c ? summarizeConversation(conversationNumber, c.config.model, c.calls, c.turns, !session && !!replay) : null;
+    return c
+      ? summarizeConversation(conversationNumber, c.config.model, c.calls, c.turns, !session && !!replay, c.config.caching)
+      : null;
   }
 
   function renderHistory() {
@@ -334,6 +358,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     const playing: Replay = { info, data, calls: [], turns: [] };
     replay = playing;
     modelSelect.value = data.config.model;
+    cachingSelect.value = data.config.caching ? "on" : "off";
     const recordedOn = data.exportedAt.slice(0, 10);
     replayText.textContent =
       `Replaying a recorded conversation: “${info.title}” on ${modelLabel(data.config.model)}, recorded ` +
@@ -420,6 +445,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   });
 
   modelSelect.addEventListener("change", startSession);
+  cachingSelect.addEventListener("change", startSession);
   newSessionButton.addEventListener("click", startSession);
 
   exportButton.addEventListener("click", () => {
@@ -442,7 +468,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     session ??= new Session({
       apiKey: keys.get(),
       ...(options.fetch ? { fetch: options.fetch } : {}),
-      config: { model: modelSelect.value as ModelId, ...DEFAULT_CONFIG },
+      config: { ...DEFAULT_CONFIG, model: modelSelect.value as ModelId, caching: cachingSelect.value === "on" },
       onCall: logCall,
     });
     const live = session;

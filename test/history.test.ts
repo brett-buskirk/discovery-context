@@ -40,9 +40,10 @@ describe("summarizeConversation", () => {
       cost: (2200 * 2 + 80 * 10) / 1e6,
       priced: true,
       recorded: false,
+      caching: false,
     });
     // No message text, so nothing the user typed is kept.
-    expect(JSON.stringify(summary)).not.toContain("hi");
+    expect(JSON.stringify(summary)).not.toContain('"hi"');
   });
 });
 

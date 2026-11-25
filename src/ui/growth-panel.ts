@@ -18,9 +18,13 @@ export function niceScale(max: number, targetTicks = 4): { max: number; step: nu
 
 export function barTitle(g: CallGrowth): string {
   const extra = g.clamped ? " (the difference was negative and is shown as 0)" : "";
+  const cache =
+    g.cacheRead + g.cacheWrite > 0
+      ? ` From cache: ${n(g.cacheRead)}. Written to cache: ${n(g.cacheWrite)}.`
+      : "";
   return (
     `Call ${g.call.index + 1}, message ${g.call.turn + 1}: ${n(g.prompt)} input tokens. ` +
-    `${n(g.sentBefore)} sent before, ${n(g.added)} new${extra}. ${n(g.output)} output tokens.`
+    `${n(g.sentBefore)} sent before, ${n(g.added)} new${extra}.${cache} ${n(g.output)} output tokens.`
   );
 }
 
@@ -59,6 +63,23 @@ export function renderChart(summary: GrowthSummary): SVGSVGElement {
       `The latest call sent ${n(summary.latestPrompt)} input tokens. Exact values are in the table below.`,
   });
 
+  // Hatching marks the part of the resent history that was read from the cache: same tokens, sent again,
+  // billed at the cache-read price. A texture rather than a third colour, so it reads in every theme and
+  // without colour vision.
+  if (summary.cachingUsed) {
+    svg.append(
+      svgEl(
+        "defs",
+        {},
+        svgEl(
+          "pattern",
+          { id: "cache-hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" },
+          svgEl("line", { x1: 0, y1: 0, x2: 0, y2: 6, class: "hatch-line" }),
+        ),
+      ),
+    );
+  }
+
   // Gridlines and y-axis labels.
   for (let v = 0; v <= max; v += step) {
     svg.append(
@@ -83,6 +104,18 @@ export function renderChart(summary: GrowthSummary): SVGSVGElement {
     } else if (hBefore > 0) {
       group.append(topRoundedBar(x, base - hBefore, barW, hBefore, "seg-resent"));
     }
+    const hCached = (g.sentBeforeCached / max) * plotH;
+    if (hCached > 0) {
+      // fill is set as an SVG attribute, not in the stylesheet, so the #fragment resolves against this page.
+      // Over the bottom of "sent before". If it covers all of it and nothing new sits on top, follow the
+      // rounded end so the hatching doesn't poke out at the corners.
+      const reachesTop = g.added === 0 && g.sentBeforeCached >= g.sentBefore;
+      const hatch = reachesTop
+        ? topRoundedBar(x, base - hCached, barW, hCached, "seg-cached")
+        : svgEl("rect", { x, y: base - hCached, width: barW, height: hCached, class: "seg-cached" });
+      hatch.setAttribute("fill", "url(#cache-hatch)");
+      group.append(hatch);
+    }
     // A full-height transparent hit area, so hovering anywhere in the column shows the tooltip.
     group.append(svgEl("rect", { x: M.left + slot * i, y: M.top, width: slot, height: plotH, class: "hit" }));
 
@@ -105,7 +138,19 @@ function tile(label: string, value: string, note: string): HTMLElement {
 }
 
 function renderTable(summary: GrowthSummary): HTMLElement {
-  const head = ["Call", "Message", "stop_reason", "Sent before", "New", "Input total", "Output", "Cost", "Running cost"];
+  const cached = summary.cachingUsed;
+  const head = [
+    "Call",
+    "Message",
+    "stop_reason",
+    "Sent before",
+    "New",
+    "Input total",
+    ...(cached ? ["From cache", "Written to cache"] : []),
+    "Output",
+    "Cost",
+    "Running cost",
+  ];
   return el(
     "div",
     { class: "table-wrap" },
@@ -127,6 +172,7 @@ function renderTable(summary: GrowthSummary): HTMLElement {
             el("td", {}, n(g.sentBefore)),
             el("td", {}, `${n(g.added)}${g.clamped ? "*" : ""}`),
             el("td", {}, n(g.prompt)),
+            ...(cached ? [el("td", {}, n(g.cacheRead)), el("td", {}, n(g.cacheWrite))] : []),
             el("td", {}, n(g.output)),
             el("td", {}, g.cost ? formatUsd(g.cost.total) : "n/a"),
             el("td", {}, formatUsd(g.runningCost)),
@@ -161,6 +207,20 @@ export function renderGrowthPanel(container: HTMLElement, calls: Parameters<type
       ),
       tile("Output tokens", n(summary.totalOutput), "including hidden thinking"),
       tile("Cost at list prices", formatUsd(summary.totalCost), price ? price.label : "model not in price table"),
+      ...(summary.cachingUsed
+        ? [
+            tile(
+              "Read from cache",
+              summary.totalPrompt > 0 ? `${Math.round((summary.totalCacheRead / summary.totalPrompt) * 100)}%` : "n/a",
+              `${n(summary.totalCacheRead)} of the input tokens billed, at the cache-read price`,
+            ),
+            tile(
+              "Without caching (estimate)",
+              summary.costWithoutCaching === null ? "n/a" : formatUsd(summary.costWithoutCaching),
+              "the same tokens, all at the full input price",
+            ),
+          ]
+        : []),
     ),
     el("h3", {}, "Input tokens per API call"),
     el(
@@ -168,9 +228,22 @@ export function renderGrowthPanel(container: HTMLElement, calls: Parameters<type
       { class: "legend" },
       el("li", {}, el("span", { class: "swatch seg-resent", "aria-hidden": "true" }), "Sent before (resent history)"),
       el("li", {}, el("span", { class: "swatch seg-new", "aria-hidden": "true" }), "New since that call"),
+      summary.cachingUsed
+        ? el("li", {}, el("span", { class: "swatch seg-cached", "aria-hidden": "true" }), "Hatched: read from cache")
+        : "",
     ),
     renderChart(summary),
     renderTable(summary),
+    summary.cachingUsed
+      ? el(
+          "p",
+          { class: "note" },
+          "Prompt caching doesn't make the request smaller: the whole history is still sent on every call. " +
+            "The part the API already has cached is billed at the cache-read price, and anything newly " +
+            "cached is billed at the cache-write price, which is a little higher than normal input. The " +
+            "\"Without caching\" figure is calculated: the same token counts, priced as plain input.",
+        )
+      : "",
     el(
       "p",
       { class: "note" },
