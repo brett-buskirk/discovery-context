@@ -42,6 +42,7 @@ npm install
 npm run dev      # local dev server
 npm test         # tests (they never call the real API)
 npm run build    # typecheck and build to dist/
+npm run preview  # serve the build, with its Content-Security-Policy
 ```
 
 ## Disclaimer

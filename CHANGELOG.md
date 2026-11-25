@@ -13,4 +13,6 @@ All notable changes to discovery-context are documented here. The format is base
   if `src/` imports runtime code from any npm package.
 - Agent core: Northwind tools and fake backend ported to the browser, a `fetch`-based Messages API
   client with SDK-equivalent retries, and an instrumented agent loop that records every API call.
+- Key entry and Content-Security-Policy: in-memory key handling, a strict CSP (with Trusted Types)
+  in the built page, text-only rendering, and a first working chat page with a per-call log.
 - CI workflow: typecheck, tests, build, and a check that no SDK code ships in the bundle.

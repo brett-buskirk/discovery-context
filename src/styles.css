@@ -62,3 +62,60 @@ a { color: var(--blue); }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- Panels and forms ---------- */
+.panel {
+  background: var(--sheet);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 0 1rem;
+}
+
+h2 { font-size: 1.1rem; margin: 0 0 0.5rem; }
+
+.row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+label { font-weight: 600; display: block; margin: 0 0 0.25rem; }
+.row > label { margin: 0; }
+
+input, select, button { font: inherit; }
+
+input[type="password"], input[type="text"] {
+  flex: 1 1 18rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+select {
+  padding: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+button {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--blue);
+  border-radius: 6px;
+  background: var(--blue);
+  color: var(--on-blue);
+  cursor: pointer;
+}
+button.secondary { background: transparent; color: var(--blue); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.note, .disclaimer { color: var(--muted); font-size: 0.9rem; }
+.error { color: var(--weak); min-height: 1.5em; margin: 0.25rem 0 0; }
+.error:empty { min-height: 0; }
+
+/* ---------- Transcript and call log ---------- */
+.transcript, .call-log { list-style: none; padding: 0; margin: 0.75rem 0; }
+.msg { padding: 0.5rem 0; border-bottom: 1px solid var(--line); white-space: pre-wrap; }
+.msg .who { font-weight: 600; }
+.msg.system { color: var(--weak); }
+.call-log li { font-family: var(--mono); font-size: 0.85rem; padding: 0.2rem 0; }
