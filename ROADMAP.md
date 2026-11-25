@@ -14,7 +14,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [ ] **Growth chart and cost panel**: input per call split into system and tools, resent history, and new
       content; output tokens; cumulative billed tokens and cost from a dated `pricing.json`.
 - [ ] **Model picker**: Sonnet 5.5, Opus 5.5, Haiku 5.5. Changing the model starts a new session.
-- [ ] **CI**: GitHub Actions job running typecheck, tests, and build on every PR.
+- [x] **CI**: GitHub Actions job running typecheck, tests, and build on every PR.
 - [ ] **Pages deployment**: GitHub Actions build and publish.
 
 ## Later
