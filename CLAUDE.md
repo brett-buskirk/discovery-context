@@ -74,7 +74,10 @@ scenario is the Northwind Outfitters support agent from that build.
   erase at build time. Never add a value import from it or any other package without Brett's sign-off.
   Check the built bundle when dependencies change.
 - **Model output and tool results are untrusted.** Render them as text (`textContent`, escaped JSON),
-  never through `innerHTML` or a markdown-to-HTML step. Injected markup on this page could read the key.
+  never through `innerHTML` or any step that turns model text into an HTML string. Injected markup on this
+  page could read the key. The one formatter is `src/ui/markdown.ts`, which parses a Markdown subset
+  straight into elements built with `el()`, with every piece of text as a text node. It never makes
+  clickable links from model text. Keep it that way, and keep its safety tests.
 - Tell visitors plainly that the key goes straight from their browser to Anthropic. Recommend a dedicated
   key in a workspace with a low spend limit, and show running cost prominently.
 - Exports (session JSON for sharing or replay) never contain the key or headers.
@@ -134,6 +137,8 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/ui/theme.ts` and `public/theme-init.js`: the theme picker, and a classic script loaded in `<head>`
   that applies the saved theme before first paint. It's a file, not inline, because the CSP blocks inline
   scripts. Both list the same themes (tested).
+- `src/ui/markdown.ts`: renders the agent's replies (tables, lists, bold, code) without HTML strings. Only
+  the agent's chat bubbles use it. The inspector always shows the raw reply.
 - `src/ui/handoff.ts`: the escalation card shown in the transcript when `escalate_to_human` runs.
 - `src/ui/timeline.ts`: the timeline and inspector. Calls are grouped under the user message that caused
   them. Each call shows its headers (key replaced by a placeholder), settings, `system`, `tools`, and every

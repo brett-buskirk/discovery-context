@@ -10,6 +10,7 @@ import { renderThemePicker } from "./theme";
 
 export const SOURCE_URL = "https://github.com/brett-buskirk/discovery-context";
 import { HANDOFF_TOOL, renderHandoff } from "./handoff";
+import { renderMarkdown } from "./markdown";
 import { renderCall, renderTurn } from "./timeline";
 
 export type AppOptions = {
@@ -208,9 +209,10 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   const SPEAKERS = { you: "You", agent: "Northwind agent", system: "Note" } as const;
 
   function say(who: keyof typeof SPEAKERS, text: string) {
-    transcript.append(
-      el("li", { class: `msg ${who}` }, el("span", { class: "who" }, SPEAKERS[who]), el("p", { class: "bubble" }, text)),
-    );
+    // The agent's replies are Markdown, rendered safely (see markdown.ts). What you and the page write is
+    // shown exactly as typed. The inspector always shows the raw reply.
+    const bubble = who === "agent" ? el("div", { class: "bubble" }, renderMarkdown(text)) : el("p", { class: "bubble" }, text);
+    transcript.append(el("li", { class: `msg ${who}` }, el("span", { class: "who" }, SPEAKERS[who]), bubble));
     scrollToEnd();
   }
 
