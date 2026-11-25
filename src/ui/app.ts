@@ -6,6 +6,7 @@ import { summarizeConversation, type ConversationSummary } from "../agent/histor
 import { renderGrowthPanel } from "./growth-panel";
 import { renderHistoryPanel } from "./history-panel";
 import { renderSampleSheet } from "./sample-sheet";
+import { renderThemePicker } from "./theme";
 import { HANDOFF_TOOL, renderHandoff } from "./handoff";
 import { renderCall, renderTurn } from "./timeline";
 
@@ -76,7 +77,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   );
 
   root.replaceChildren(
-    el("h1", {}, "Context Discovery"),
+    el("header", { class: "page-header" }, el("h1", {}, "Context Discovery"), renderThemePicker()),
     el("p", { class: "tagline" }, "See what an AI agent actually sends and receives, one API call at a time."),
     el(
       "aside",

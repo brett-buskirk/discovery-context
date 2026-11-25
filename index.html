@@ -7,6 +7,8 @@
   <title>Context Discovery</title>
   <!-- The Content-Security-Policy <meta> is added at build time (vite.config.ts, src/security/csp.ts). -->
   <meta name="referrer" content="no-referrer">
+  <!-- Blocking on purpose: applies the saved theme before first paint. -->
+  <script src="/theme-init.js"></script>
 </head>
 <body>
   <main id="app"></main>

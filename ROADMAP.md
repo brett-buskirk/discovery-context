@@ -23,7 +23,8 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [x] **Pages deployment**: GitHub Actions build and publish on merge to `main`.
 
 ## Later
-- [ ] Auto/Dark/Light theme toggle. The theme follows the operating system for now.
+- [x] Theme picker: Auto, Light, Dark, Sepia, and High contrast.
+- [x] Chat card and a "this is a simulation" note.
 - [ ] Per-segment token counts from `count_tokens`: how much of each request is the system prompt and tool
       definitions, compared with the ~4-characters-per-token rule of thumb.
 - [ ] Prompt caching mode with real `cache_read` / `cache_creation` numbers.
