@@ -6,6 +6,14 @@ All notable changes to discovery-context are documented here. The format is base
 
 ## [Unreleased]
 
+### Changed
+- The conversation sits in its own scrolling chat card with message bubbles, labelled as a simulated
+  Northwind Outfitters support agent.
+
+### Added
+- A note at the top of the page explaining that the agent is a simulated, single-purpose support agent
+  for a made-up store, not a general chatbot.
+
 ## [0.1.1] - 2026-11-25
 
 First public release. Live at https://brett-buskirk.github.io/discovery-context/.

@@ -85,8 +85,14 @@ describe("chat", () => {
     enterKey(KEY);
     await sendMessage("I'm marcus@example.com");
 
-    const transcript = [...root.querySelectorAll(".transcript li")].map((li) => li.textContent);
-    expect(transcript).toEqual(["you: I'm marcus@example.com", "agent: Found you, Marcus."]);
+    const transcript = [...root.querySelectorAll(".transcript li")].map((li) => [
+      li.querySelector(".who")?.textContent,
+      li.querySelector(".bubble")?.textContent,
+    ]);
+    expect(transcript).toEqual([
+      ["You", "I'm marcus@example.com"],
+      ["Northwind agent", "Found you, Marcus."],
+    ]);
     const turns = root.querySelectorAll(".timeline .turn");
     expect(turns).toHaveLength(1);
     expect(turns[0]!.querySelector("h3")?.textContent).toBe("Message 1: I'm marcus@example.com");
@@ -128,5 +134,25 @@ describe("chat", () => {
     expect(turn.classList.contains("rolled-back")).toBe(true);
     expect(turn.querySelector(".turn-status")?.textContent).toContain("rolled back");
     expect(turn.querySelector(".call.failed")).not.toBeNull();
+  });
+});
+
+describe("layout", () => {
+  it("says up front that this is a simulated, single-purpose agent", () => {
+    const { root } = setup();
+    const callout = root.querySelector("aside.callout")!;
+    expect(callout.textContent).toContain("This is a simulation.");
+    expect(callout.textContent).toContain("isn't a general-purpose chatbot");
+    // It comes before the key entry, so it's read first.
+    expect(callout.compareDocumentPosition(root.querySelector(".key-form")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("puts the conversation and the message box inside their own card", () => {
+    const { root } = setup();
+    const card = root.querySelector(".chat-card")!;
+    expect(card.querySelector(".chat-header h2")?.textContent).toBe("Northwind Outfitters support");
+    expect(card.querySelector(".sim-badge")?.textContent).toBe("Simulated");
+    expect(card.querySelector(".transcript")).not.toBeNull();
+    expect(card.querySelector("form.chat-form")).not.toBeNull();
   });
 });

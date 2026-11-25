@@ -56,7 +56,8 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     ...MODELS.map((m) => el("option", { value: m.id }, m.label)),
   );
   const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
-  const transcript = el("ol", { class: "transcript", "aria-live": "polite" });
+  // The conversation scrolls inside its own card, so a long chat doesn't push everything else down.
+  const transcript = el("ol", { class: "transcript", "aria-live": "polite", "aria-label": "Conversation" });
   const growth = el("div", { class: "growth" });
   const historyView = el("div", { class: "history" });
   // Finished conversations, numbers only, in memory only.
@@ -77,6 +78,15 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   root.replaceChildren(
     el("h1", {}, "Context Discovery"),
     el("p", { class: "tagline" }, "See what an AI agent actually sends and receives, one API call at a time."),
+    el(
+      "aside",
+      { class: "callout", "aria-label": "About this demo" },
+      el("strong", {}, "This is a simulation. "),
+      "Northwind Outfitters is a made-up outdoor gear store, and its support agent only knows that store's " +
+        "sample customers and orders. It can look them up, issue refunds, and hand off to a human, and nothing " +
+        "else: it isn't a general-purpose chatbot. The point is to watch what gets sent to the Claude API, and " +
+        "what it costs, while it works.",
+    ),
     el("section", { class: "panel", "aria-label": "API key" }, keyForm, keyLoaded, keyNote),
     el(
       "section",
@@ -86,8 +96,23 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
         messageInput.value = prompt;
         if (!messageInput.disabled) messageInput.focus();
       }),
-      transcript,
-      chatForm,
+      el(
+        "div",
+        { class: "chat-card" },
+        el(
+          "div",
+          { class: "chat-header" },
+          el("h2", {}, "Northwind Outfitters support"),
+          el("span", { class: "sim-badge" }, "Simulated"),
+        ),
+        el(
+          "p",
+          { class: "chat-sub" },
+          "A fictional store's support agent, running on the model you picked. Sample data only.",
+        ),
+        transcript,
+        chatForm,
+      ),
     ),
     el("section", { class: "panel", "aria-label": "Context growth and cost" }, el("h2", {}, "Context growth and cost"), growth),
     el("section", { class: "panel", "aria-label": "Compare conversations" }, el("h2", {}, "Compare conversations"), historyView),
@@ -151,13 +176,27 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   function logCall(call: CallRecord) {
     currentTurn?.calls.append(renderCall(call));
     // Show each handoff in the conversation as it happens, before the agent's reply about it.
-    for (const run of call.toolRuns) if (run.name === HANDOFF_TOOL) transcript.append(renderHandoff(run));
+    for (const run of call.toolRuns) {
+      if (run.name === HANDOFF_TOOL) {
+        transcript.append(renderHandoff(run));
+        scrollToEnd();
+      }
+    }
     if (session) renderGrowthPanel(growth, session.calls, session.config.model);
     renderHistory();
   }
 
-  function say(who: "you" | "agent" | "system", text: string) {
-    transcript.append(el("li", { class: `msg ${who}` }, el("span", { class: "who" }, `${who}: `), text));
+  const SPEAKERS = { you: "You", agent: "Northwind agent", system: "Note" } as const;
+
+  function say(who: keyof typeof SPEAKERS, text: string) {
+    transcript.append(
+      el("li", { class: `msg ${who}` }, el("span", { class: "who" }, SPEAKERS[who]), el("p", { class: "bubble" }, text)),
+    );
+    scrollToEnd();
+  }
+
+  function scrollToEnd() {
+    transcript.scrollTop = transcript.scrollHeight;
   }
 
   function describeStop(outcome: Extract<TurnOutcome, { status: "stopped" }>): string {
