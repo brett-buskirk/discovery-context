@@ -2,6 +2,7 @@
 import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
 import { KeyStore } from "../security/key-store";
 import { el, externalLink } from "./dom";
+import { buildSessionExport, exportFileName, serializeSessionExport } from "../agent/export";
 import { summarizeConversation, type ConversationSummary } from "../agent/history";
 import { renderGrowthPanel } from "./growth-panel";
 import { renderHistoryPanel } from "./history-panel";
@@ -60,6 +61,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     ...MODELS.map((m) => el("option", { value: m.id }, m.label)),
   );
   const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
+  const exportButton = el("button", { type: "button", class: "secondary", disabled: true }, "Export conversation (JSON)");
   // The conversation scrolls inside its own card, so a long chat doesn't push everything else down.
   const transcript = el("ol", { class: "transcript", "aria-live": "polite", "aria-label": "Conversation" });
   const growth = el("div", { class: "growth" });
@@ -100,7 +102,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     el(
       "section",
       { class: "panel", "aria-label": "Conversation" },
-      el("div", { class: "row" }, el("label", { for: "model" }, "Model"), modelSelect, newSessionButton),
+      el("div", { class: "row" }, el("label", { for: "model" }, "Model"), modelSelect, newSessionButton, exportButton),
       renderSampleSheet((prompt) => {
         messageInput.value = prompt;
         if (!messageInput.disabled) messageInput.focus();
@@ -190,10 +192,16 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     currentTurn = null;
     renderGrowthPanel(growth, [], modelSelect.value);
     renderHistory();
+    updateExportButton();
     setChatEnabled(keys.has());
   }
 
+  function updateExportButton() {
+    exportButton.disabled = !session || session.calls.length === 0;
+  }
+
   function logCall(call: CallRecord) {
+    updateExportButton();
     currentTurn?.calls.append(renderCall(call));
     // Show each handoff in the conversation as it happens, before the agent's reply about it.
     for (const run of call.toolRuns) {
@@ -252,6 +260,16 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
 
   modelSelect.addEventListener("change", startSession);
   newSessionButton.addEventListener("click", startSession);
+
+  exportButton.addEventListener("click", () => {
+    if (!session || session.calls.length === 0) return;
+    const json = serializeSessionExport(buildSessionExport(session), keys.has() ? keys.get() : undefined);
+    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    const link = el("a", { href: url, download: exportFileName(session.config.model) });
+    link.click();
+    // Give the browser a moment to start the download before releasing the object URL.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
 
   chatForm.addEventListener("submit", async (event) => {
     event.preventDefault();

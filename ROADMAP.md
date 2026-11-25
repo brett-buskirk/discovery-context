@@ -30,6 +30,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [ ] Prompt caching mode with real `cache_read` / `cache_creation` numbers.
 - [ ] What-if comparisons, clearly labelled as estimates: prompt caching on or off, trimmed tool results,
       other models' prices.
-- [ ] Session export (JSON, never including the key or headers).
+- [x] Session export (JSON, never including the key or headers).
+- [ ] Replay mode: recorded conversations for visitors without a key, played through the same views.
 - [ ] A short "what you'll see" walkthrough for visitors without a key.
 - [ ] A note on message threads (beta): smaller uploads, same bill.
