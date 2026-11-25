@@ -87,4 +87,16 @@ scenario is the Northwind Outfitters support agent from that build.
 - localStorage keys are versioned (`discovery-context-v1-*`). Change the key if the stored format changes.
 
 ## Layout
-_Not built yet. See `ROADMAP.md` for the plan, and update this section as directories land._
+- `index.html`: page entry (Vite).
+- `src/main.ts`: app entry. `src/styles.css`: palette, theme, base styles.
+- `src/api/types.ts`: the **only** place the SDK is referenced. Type-only re-exports of the request and
+  response shapes. Import API types from here, not from the SDK directly.
+- `test/`: Vitest tests (jsdom). `test/no-runtime-deps.test.ts` fails if anything in `src/` imports
+  runtime code from an npm package. Don't weaken or skip it.
+- `tsconfig.json` covers browser code (`src/`, DOM types, no Node). `tsconfig.node.json` covers tests and
+  `vite.config.ts` (Node types).
+
+## Commands
+- `npm run dev`: local dev server. `npm run build`: typecheck, then build to `dist/`.
+- `npm test`: run the tests once. `npm run typecheck`: both tsconfigs.
+- Dependencies are pinned exactly (`--save-exact`). All of them are devDependencies.

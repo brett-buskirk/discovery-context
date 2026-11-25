@@ -1,0 +1,64 @@
+/* Palette and fonts match the ccaf-study practice exam, so the AI Discovery series reads as one set. */
+:root {
+  --paper: #EDF1F4;
+  --sheet: #F8FAFB;
+  --ink: #13283B;
+  --muted: #55697A;
+  --line: #C3CFD9;
+  --blue: #1D5BB8;
+  --blue-soft: #DCE7F6;
+  --strong: #1B7F55;
+  --mid: #B9860B;
+  --weak: #BF4127;
+  --on-blue: #FFFFFF;
+  --ui: "Avenir Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --read: "Iowan Old Style", Palatino, Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light dark;
+}
+
+/* Auto theme for now. The Auto/Dark/Light toggle arrives with the UI work. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0F1E2C;
+    --sheet: #162A3C;
+    --ink: #E6EDF3;
+    --muted: #9DB0C0;
+    --line: #33495C;
+    --blue: #7FB0F5;
+    --blue-soft: #1F3A57;
+    --strong: #4CC08D;
+    --mid: #E0B040;
+    --weak: #F0785C;
+    --on-blue: #0F1E2C;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1rem;
+  font: 16px/1.5 var(--ui);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+#app {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+h1 { margin: 0 0 0.25rem; }
+
+.tagline { font-family: var(--read); font-size: 1.15rem; margin: 0 0 1rem; }
+
+.status { color: var(--muted); }
+
+a { color: var(--blue); }
+
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

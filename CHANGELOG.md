@@ -9,3 +9,5 @@ All notable changes to discovery-context are documented here. The format is base
 ### Added
 - Initial scaffold.
 - Project plan: `CLAUDE.md` with scope, stack, accuracy and key-handling rules; README; roadmap.
+- Vite + TypeScript scaffold with Vitest. `@anthropic-ai/sdk` is used for types only, and a test fails
+  if `src/` imports runtime code from any npm package.

@@ -3,8 +3,8 @@
 _What's planned for Context Discovery. Each item is one focused pull request. Check items off as they ship._
 
 ## v0.1: first public version
-- [ ] **Project plan**: `CLAUDE.md`, README, roadmap.
-- [ ] **Scaffold**: Vite + TypeScript (strict), Vitest, `@anthropic-ai/sdk` as a types-only dependency.
+- [x] **Project plan**: `CLAUDE.md`, README, roadmap.
+- [x] **Scaffold**: Vite + TypeScript (strict), Vitest, `@anthropic-ai/sdk` as a types-only dependency.
 - [ ] **Agent core**: browser port of the Northwind tools and fake backend, plus the agent loop over
       `fetch` (`stop_reason`-driven, with retries and error handling). Tested with a mocked `fetch`.
 - [ ] **Key entry and CSP**: in-memory key handling, key masking, a strict Content-Security-Policy,
@@ -14,6 +14,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [ ] **Growth chart and cost panel**: input per call split into system and tools, resent history, and new
       content; output tokens; cumulative billed tokens and cost from a dated `pricing.json`.
 - [ ] **Model picker**: Sonnet 5.5, Opus 5.5, Haiku 5.5. Changing the model starts a new session.
+- [ ] **CI**: GitHub Actions job running typecheck, tests, and build on every PR.
 - [ ] **Pages deployment**: GitHub Actions build and publish.
 
 ## Later

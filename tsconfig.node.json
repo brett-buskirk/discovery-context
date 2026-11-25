@@ -1,0 +1,9 @@
+{
+  // Tests and build config run in Node, not the browser, so they get Node types. Kept separate from
+  // tsconfig.json so browser code in src/ can't accidentally use Node APIs.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"]
+  },
+  "include": ["test", "vite.config.ts"]
+}
