@@ -16,6 +16,7 @@
     // This is what keeps @anthropic-ai/sdk out of the shipped bundle.
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true
   },

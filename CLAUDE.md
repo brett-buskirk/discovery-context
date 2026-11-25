@@ -106,6 +106,15 @@ scenario is the Northwind Outfitters support agent from that build.
   copy, except `Session`, which also uses a `#private` field.
 - `src/ui/dom.ts`: `el()`, the only way the app builds DOM. Children are text, and `on*` attributes throw.
 - `src/ui/app.ts`: the page (key entry, model picker, chat, timeline).
+- `src/pricing/pricing.json`: list prices, with `asOf` and `source`. **Re-check against the source before
+  changing it, and bump `asOf`.** `src/pricing/cost.ts`: `costOf()` (input, 5m/1h cache writes, cache reads,
+  output; Haiku 5.5's >100K tier counts cache tokens toward the threshold) and `formatUsd()`.
+- `src/agent/growth.ts`: `analyzeGrowth()`. A call's "sent before" is the prompt of the latest earlier call
+  whose request it starts with, and "new" is the difference. That split is derived from measured totals,
+  and the UI says so.
+- `src/ui/growth-panel.ts` and `src/ui/svg.ts`: headline tiles, the stacked SVG bar chart (a native `<title>`
+  tooltip per bar), and the per-call table, which is the chart's accessible view. Chart colours are a
+  one-hue blue ramp checked with the dataviz palette validator in both modes (`--viz-*` in `styles.css`).
 - `src/ui/timeline.ts`: the timeline and inspector. Calls are grouped under the user message that caused
   them. Each call shows its headers (key replaced by a placeholder), settings, `system`, `tools`, and every
   message labelled `resent` or `new`, plus the raw body, response, usage, tool runs, and retries.
