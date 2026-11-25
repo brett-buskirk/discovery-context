@@ -3,6 +3,7 @@ import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type Tu
 import { KeyStore } from "../security/key-store";
 import { el } from "./dom";
 import { renderGrowthPanel } from "./growth-panel";
+import { HANDOFF_TOOL, renderHandoff } from "./handoff";
 import { renderCall, renderTurn } from "./timeline";
 
 export type AppOptions = {
@@ -114,6 +115,8 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
 
   function logCall(call: CallRecord) {
     currentTurn?.calls.append(renderCall(call));
+    // Show each handoff in the conversation as it happens, before the agent's reply about it.
+    for (const run of call.toolRuns) if (run.name === HANDOFF_TOOL) transcript.append(renderHandoff(run));
     if (session) renderGrowthPanel(growth, session.calls, session.config.model);
   }
 

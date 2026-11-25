@@ -115,6 +115,7 @@ scenario is the Northwind Outfitters support agent from that build.
 - `src/ui/growth-panel.ts` and `src/ui/svg.ts`: headline tiles, the stacked SVG bar chart (a native `<title>`
   tooltip per bar), and the per-call table, which is the chart's accessible view. Chart colours are a
   one-hue blue ramp checked with the dataviz palette validator in both modes (`--viz-*` in `styles.css`).
+- `src/ui/handoff.ts`: the escalation card shown in the transcript when `escalate_to_human` runs.
 - `src/ui/timeline.ts`: the timeline and inspector. Calls are grouped under the user message that caused
   them. Each call shows its headers (key replaced by a placeholder), settings, `system`, `tools`, and every
   message labelled `resent` or `new`, plus the raw body, response, usage, tool runs, and retries.

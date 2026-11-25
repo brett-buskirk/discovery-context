@@ -20,4 +20,6 @@ All notable changes to discovery-context are documented here. The format is base
 - Context growth and cost panel: headline numbers (input billed, conversation size, resend multiplier,
   output, cost), a per-call stacked chart of resent vs new input, and a per-call table. Prices from a
   dated `pricing.json`.
+- Handoff card: an `escalate_to_human` call appears in the conversation as a card showing every field
+  the human reviewer receives and the ticket number.
 - CI workflow: typecheck, tests, build, and a check that no SDK code ships in the bundle.
