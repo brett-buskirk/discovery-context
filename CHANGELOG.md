@@ -26,4 +26,6 @@ All notable changes to discovery-context are documented here. The format is base
   switches, "New conversation", and forgetting the key, so models can be compared.
 - Sample data grows to 10 customers and 25 orders (Build 01's originals unchanged), with a cancelled
   status and a new `list_orders` tool.
+- Sample-data sheet: a collapsible on-page reference of every customer and order, plus ten scenarios
+  that put a ready-made message in the box.
 - CI workflow: typecheck, tests, build, and a check that no SDK code ships in the bundle.
