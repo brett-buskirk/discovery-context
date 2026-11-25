@@ -11,7 +11,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
       untrusted output rendered as text. Gets its own security review.
 - [x] **Timeline and inspector**: every API call grouped under the user message that triggered it, with the
       raw request and response. History that was already sent is dimmed so the new part stands out.
-- [ ] **Growth chart and cost panel**: input per call split into system and tools, resent history, and new
+- [x] **Growth chart and cost panel**: input per call split into system and tools, resent history, and new
       content; output tokens; cumulative billed tokens and cost from a dated `pricing.json`.
 - [ ] **Model picker**: Sonnet 5.5, Opus 5.5, Haiku 5.5. Changing the model starts a new session.
 - [x] **CI**: GitHub Actions job running typecheck, tests, and build on every PR.

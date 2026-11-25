@@ -17,4 +17,7 @@ All notable changes to discovery-context are documented here. The format is base
   in the built page, text-only rendering, and a first working chat page with a per-call log.
 - Timeline and inspector: every API call grouped under its user message, with the exact request
   (resent history labelled and dimmed) and response, tool runs, retries, and rolled-back turns.
+- Context growth and cost panel: headline numbers (input billed, conversation size, resend multiplier,
+  output, cost), a per-call stacked chart of resent vs new input, and a per-call table. Prices from a
+  dated `pricing.json`.
 - CI workflow: typecheck, tests, build, and a check that no SDK code ships in the bundle.

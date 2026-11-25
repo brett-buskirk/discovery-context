@@ -2,6 +2,7 @@
 import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
 import { KeyStore } from "../security/key-store";
 import { el } from "./dom";
+import { renderGrowthPanel } from "./growth-panel";
 import { renderCall, renderTurn } from "./timeline";
 
 export type AppOptions = {
@@ -52,6 +53,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   );
   const newSessionButton = el("button", { type: "button", class: "secondary" }, "New conversation");
   const transcript = el("ol", { class: "transcript", "aria-live": "polite" });
+  const growth = el("div", { class: "growth" });
   const timeline = el("ol", { class: "timeline" });
   // The turn group that calls are currently being added to.
   let currentTurn: ReturnType<typeof renderTurn> | null = null;
@@ -75,6 +77,7 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       transcript,
       chatForm,
     ),
+    el("section", { class: "panel", "aria-label": "Context growth and cost" }, el("h2", {}, "Context growth and cost"), growth),
     el(
       "section",
       { class: "panel", "aria-label": "API calls" },
@@ -90,6 +93,8 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     el("p", { class: "disclaimer" }, "Unofficial educational project. Not affiliated with or endorsed by Anthropic."),
   );
 
+  renderGrowthPanel(growth, [], modelSelect.value);
+
   // ---------- Behaviour ----------
   function setChatEnabled(enabled: boolean) {
     messageInput.disabled = !enabled;
@@ -102,12 +107,14 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
     transcript.replaceChildren();
     timeline.replaceChildren();
     currentTurn = null;
+    renderGrowthPanel(growth, [], modelSelect.value);
     session = null;
     setChatEnabled(keys.has());
   }
 
   function logCall(call: CallRecord) {
     currentTurn?.calls.append(renderCall(call));
+    if (session) renderGrowthPanel(growth, session.calls, session.config.model);
   }
 
   function say(who: "you" | "agent" | "system", text: string) {
