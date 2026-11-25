@@ -98,8 +98,11 @@ scenario is the Northwind Outfitters support agent from that build.
   `CallRecord` per API call: a deep-copied request snapshot, the response, attempts, tool runs, and
   `resentMessageCount`. A turn that can't finish (refusal, `max_tokens`, error, call limit) is rolled back
   out of `messages` so the conversation stays valid. Its call records are kept.
-- `src/northwind/`: the fictional backend and tools, ported from ccaf-study Build 01. `createBackend()` is a
-  factory, so each session and test is isolated.
+- `src/northwind/`: the fictional backend and tools, ported from ccaf-study Build 01 and extended.
+  `data.ts` is the single source of the sample data: customers and orders, with dates stored as days ago.
+  The first three customers and orders are the Build 01 originals; keep them unchanged. `createBackend()`
+  copies the data, so each session and test is isolated. The tools are `get_customer`, `lookup_order`,
+  `list_orders` (added here, not in Build 01), `process_refund`, and `escalate_to_human`.
 - `src/security/csp.ts`: the CSP directives. `vite.config.ts` injects them as the first `<meta>` in the
   **built** page only (the dev server needs inline scripts). Use `npm run preview` to test under the CSP.
 - `src/security/key-store.ts`: `KeyStore` holds the key in a `#private` field. Nothing else should keep a

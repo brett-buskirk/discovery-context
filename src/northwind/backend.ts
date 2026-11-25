@@ -1,17 +1,12 @@
 // A pretend database for the Northwind Outfitters demo, ported from ccaf-study Build 01.
-// No AI here, and no real data: every customer and order is fictional. It runs entirely in the browser.
+// No AI here, and no real data: every customer and order is fictional (see data.ts). It runs entirely in
+// the browser.
+import { CUSTOMERS, ORDERS, type CustomerRecord, type OrderRecord } from "./data";
 
-export type Customer = { id: string; name: string; email: string };
+export type Customer = CustomerRecord;
 
-export type Order = {
-  id: string;
-  customerId: string;
-  item: string;
-  total: number;
-  statusCode: 1 | 2 | 3; // 1 processing, 2 shipped, 3 delivered
+export type Order = Omit<OrderRecord, "deliveredDaysAgo"> & {
   deliveredAt: number | null; // Unix seconds
-  warehouseBin: string; // noise the agent never needs
-  carrierRouteCode: string; // more noise
 };
 
 export type Refund = { refundId: string; orderId: string; amount: number };
@@ -32,20 +27,12 @@ export type Backend = ReturnType<typeof createBackend>;
 
 // A factory rather than module state, so each session (and each test) gets a fresh, independent store.
 export function createBackend({ nowSeconds = Math.floor(Date.now() / 1000), flaky = false }: BackendOptions = {}) {
-  const customers: Customer[] = [
-    { id: "C-1001", name: "Dana Whitfield", email: "dana@example.com" },
-    { id: "C-1002", name: "Dana Whitfield", email: "dwhitfield@example.com" },
-    { id: "C-1003", name: "Marcus Oyelaran", email: "marcus@example.com" },
-  ];
-
-  const orders: Order[] = [
-    { id: "ORD-5001", customerId: "C-1001", item: "Trail headlamp", total: 48,
-      statusCode: 3, deliveredAt: nowSeconds - 12 * DAY, warehouseBin: "A-14", carrierRouteCode: "RX-22" },
-    { id: "ORD-5002", customerId: "C-1003", item: "Four-season tent", total: 729,
-      statusCode: 3, deliveredAt: nowSeconds - 8 * DAY, warehouseBin: "D-02", carrierRouteCode: "RX-31" },
-    { id: "ORD-5003", customerId: "C-1003", item: "Camp stove", total: 89.5,
-      statusCode: 2, deliveredAt: null, warehouseBin: "B-07", carrierRouteCode: "RX-09" },
-  ];
+  // Copies, so nothing a session does can change the shared sample data.
+  const customers: Customer[] = CUSTOMERS.map((c) => ({ ...c }));
+  const orders: Order[] = ORDERS.map(({ deliveredDaysAgo, ...o }) => ({
+    ...o,
+    deliveredAt: deliveredDaysAgo === null ? null : nowSeconds - deliveredDaysAgo * DAY,
+  }));
 
   let failNextLookup = flaky;
   let sequence = 0;
@@ -64,6 +51,15 @@ export function createBackend({ nowSeconds = Math.floor(Date.now() / 1000), flak
         throw new TimeoutError("order service timed out");
       }
       return orders.find((o) => o.id === orderId);
+    },
+
+    /** Every order on an account, oldest first. */
+    listOrders(customerId: string): Order[] {
+      return orders.filter((o) => o.customerId === customerId);
+    },
+
+    customerExists(customerId: string): boolean {
+      return customers.some((c) => c.id === customerId);
     },
 
     issueRefund(orderId: string, amount: number): Refund {

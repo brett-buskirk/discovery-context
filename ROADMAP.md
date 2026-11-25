@@ -16,8 +16,8 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 - [x] **Handoff card**: escalations shown in the conversation with exactly what the human reviewer receives.
 - [x] **Comparison history**: finished conversations kept (in memory only) in a table, so models can be
       compared after switching.
-- [ ] **Bigger sample data and a sample-data sheet**: more customers and orders, a `list_orders` tool, and an
-      on-page reference of who and what exists, with scenarios to try.
+- [x] **Bigger sample data and `list_orders`**: 10 customers, 25 orders, and a tool to list a customer's orders.
+- [ ] **Sample-data sheet**: an on-page reference of who and what exists, with scenarios to try.
 - [ ] **Model picker**: Sonnet 5.5, Opus 5.5, Haiku 5.5. Changing the model starts a new session.
 - [x] **CI**: GitHub Actions job running typecheck, tests, and build on every PR.
 - [ ] **Pages deployment**: GitHub Actions build and publish.
