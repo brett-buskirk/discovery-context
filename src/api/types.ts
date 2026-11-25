@@ -12,3 +12,4 @@ export type {
   ToolUseBlock,
   Usage,
 } from "@anthropic-ai/sdk/resources/messages";
+export type { ErrorResponse, ErrorType } from "@anthropic-ai/sdk/resources/shared";

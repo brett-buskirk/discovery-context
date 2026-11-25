@@ -5,7 +5,7 @@ _What's planned for Context Discovery. Each item is one focused pull request. Ch
 ## v0.1: first public version
 - [x] **Project plan**: `CLAUDE.md`, README, roadmap.
 - [x] **Scaffold**: Vite + TypeScript (strict), Vitest, `@anthropic-ai/sdk` as a types-only dependency.
-- [ ] **Agent core**: browser port of the Northwind tools and fake backend, plus the agent loop over
+- [x] **Agent core**: browser port of the Northwind tools and fake backend, plus the agent loop over
       `fetch` (`stop_reason`-driven, with retries and error handling). Tested with a mocked `fetch`.
 - [ ] **Key entry and CSP**: in-memory key handling, key masking, a strict Content-Security-Policy,
       untrusted output rendered as text. Gets its own security review.
