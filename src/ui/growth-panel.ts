@@ -2,7 +2,7 @@
 // own usage numbers. The table doubles as the accessible view of the chart.
 import { analyzeGrowth, type CallGrowth, type GrowthSummary } from "../agent/growth";
 import { PRICING, formatUsd } from "../pricing/cost";
-import { el } from "./dom";
+import { el, externalLink } from "./dom";
 import { svgEl } from "./svg";
 
 const n = (value: number) => value.toLocaleString("en-US");
@@ -178,7 +178,7 @@ export function renderGrowthPanel(container: HTMLElement, calls: Parameters<type
         "request starts with, and \"New\" is the difference, so the split is derived from measured totals. " +
         (anyClamped ? "* A negative difference is shown as 0. " : "") +
         `Costs are calculated from those counts at ${PRICING.currency} list prices ${PRICING.unit}, as of ${PRICING.asOf} `,
-      el("a", { href: PRICING.source, target: "_blank", rel: "noopener noreferrer" }, "(source)"),
+      externalLink(PRICING.source, "(source)"),
       ". Your actual bill can differ.",
     ),
   );

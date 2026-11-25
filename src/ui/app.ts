@@ -1,12 +1,14 @@
 // The page: key entry, model choice, the chat, and the timeline of API calls behind it.
 import { DEFAULT_CONFIG, MODELS, Session, type CallRecord, type ModelId, type TurnOutcome } from "../agent/session";
 import { KeyStore } from "../security/key-store";
-import { el } from "./dom";
+import { el, externalLink } from "./dom";
 import { summarizeConversation, type ConversationSummary } from "../agent/history";
 import { renderGrowthPanel } from "./growth-panel";
 import { renderHistoryPanel } from "./history-panel";
 import { renderSampleSheet } from "./sample-sheet";
 import { renderThemePicker } from "./theme";
+
+export const SOURCE_URL = "https://github.com/brett-buskirk/discovery-context";
 import { HANDOFF_TOOL, renderHandoff } from "./handoff";
 import { renderCall, renderTurn } from "./timeline";
 
@@ -77,7 +79,12 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
   );
 
   root.replaceChildren(
-    el("header", { class: "page-header" }, el("h1", {}, "Context Discovery"), renderThemePicker()),
+    el(
+      "header",
+      { class: "page-header" },
+      el("h1", {}, "Context Discovery"),
+      el("div", { class: "header-tools row" }, externalLink(SOURCE_URL, "Source on GitHub"), renderThemePicker()),
+    ),
     el("p", { class: "tagline" }, "See what an AI agent actually sends and receives, one API call at a time."),
     el(
       "aside",
@@ -129,7 +136,18 @@ export function renderApp(root: HTMLElement, options: AppOptions = {}): void {
       ),
       timeline,
     ),
-    el("p", { class: "disclaimer" }, "Unofficial educational project. Not affiliated with or endorsed by Anthropic."),
+    el(
+      "footer",
+      { class: "page-footer" },
+      el(
+        "p",
+        {},
+        "Context Discovery is part of the AI Discovery series. ",
+        externalLink(SOURCE_URL, "Source code on GitHub"),
+        " (MIT License).",
+      ),
+      el("p", { class: "disclaimer" }, "Unofficial educational project. Not affiliated with or endorsed by Anthropic."),
+    ),
   );
 
   renderGrowthPanel(growth, [], modelSelect.value);

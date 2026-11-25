@@ -21,3 +21,8 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   }
   return node;
 }
+
+/** A link that opens in a new tab without giving that page a handle on this one (which holds the key). */
+export function externalLink(href: string, text: string): HTMLAnchorElement {
+  return el("a", { href, target: "_blank", rel: "noopener noreferrer" }, text);
+}
