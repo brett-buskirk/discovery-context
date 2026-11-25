@@ -156,3 +156,17 @@ describe("layout", () => {
     expect(card.querySelector("form.chat-form")).not.toBeNull();
   });
 });
+
+describe("links to the source", () => {
+  it("links to the GitHub repo from the header and footer, opening safely in a new tab", () => {
+    const { root } = setup();
+    const links = [...root.querySelectorAll<HTMLAnchorElement>('a[href="https://github.com/brett-buskirk/discovery-context"]')];
+    expect(links.map((a) => a.textContent)).toEqual(["Source on GitHub", "Source code on GitHub"]);
+    expect(links[0]!.closest("header")).not.toBeNull();
+    expect(links[1]!.closest("footer")).not.toBeNull();
+    for (const a of links) {
+      expect(a.target).toBe("_blank");
+      expect(a.rel).toBe("noopener noreferrer");
+    }
+  });
+});
