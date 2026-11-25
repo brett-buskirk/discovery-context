@@ -20,7 +20,14 @@ This tool does NOT return orders, and an order ID is never a valid input here. U
 Requires the customer_id returned by get_customer.
 Returns item, total in USD, status, and delivery time.
 Use for requests like "where is my order", "check order ORD-5001", or before any refund.
+If the customer doesn't know the order ID, use list_orders first.
 This tool does NOT look up people. To identify a customer, use get_customer.`,
+
+  list_orders: `List every order on a verified customer's account.
+Requires the customer_id returned by get_customer.
+Returns order_count and, for each order, its ID, item, total in USD, status, and delivery time.
+Use when the customer doesn't know an order ID or asks what orders they have.
+An order_count of 0 means the account has no orders: the search worked, it is not an error.`,
 
   process_refund: `Refund money to the customer's original payment method. This moves real money and cannot be undone.
 Requires customer_id from get_customer and an order_id you have already confirmed with lookup_order.
@@ -55,6 +62,17 @@ export const TOOL_DEFS: Tool[] = [
         order_id: { type: "string", description: "e.g. ORD-5001" },
       },
       required: ["customer_id", "order_id"],
+    },
+  },
+  {
+    name: "list_orders",
+    description: descriptions.list_orders,
+    input_schema: {
+      type: "object",
+      properties: {
+        customer_id: { type: "string", description: "From get_customer, e.g. C-1004" },
+      },
+      required: ["customer_id"],
     },
   },
   {
@@ -123,6 +141,19 @@ const handlers: Record<string, Handler> = {
     return ok({ found: true, order: { id, item, total, statusCode, deliveredAt } });
   },
 
+  list_orders(input, backend) {
+    const customerId = str(input.customer_id) ?? "";
+    if (!backend.customerExists(customerId)) {
+      return fail("validation", false, `No customer ${customerId}. Verify the customer with get_customer first.`);
+    }
+    // The same trimmed fields as lookup_order. With a long history this result is still large, and it's
+    // resent on every later request.
+    const orders = backend
+      .listOrders(customerId)
+      .map(({ id, item, total, statusCode, deliveredAt }) => ({ id, item, total, statusCode, deliveredAt }));
+    return ok({ customer_id: customerId, order_count: orders.length, orders });
+  },
+
   process_refund(input, backend) {
     const customerId = str(input.customer_id);
     const orderId = str(input.order_id) ?? "";
@@ -130,6 +161,9 @@ const handlers: Record<string, Handler> = {
     const order = backend.getOrder(orderId);
     if (!order || order.customerId !== customerId) {
       return fail("validation", false, `No order ${orderId} on customer ${customerId}. Confirm it with lookup_order first.`);
+    }
+    if (order.statusCode === 4) {
+      return fail("business", false, "This order was cancelled before it shipped, so there is nothing to refund.");
     }
     if (order.statusCode !== 3) {
       return fail("business", false, "This order has not been delivered yet, so it cannot be refunded. Tell the customer a refund becomes available once it arrives.");

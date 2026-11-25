@@ -24,4 +24,6 @@ All notable changes to discovery-context are documented here. The format is base
   the human reviewer receives and the ticket number.
 - Comparison history: each conversation's numbers are kept in memory, in a table that survives model
   switches, "New conversation", and forgetting the key, so models can be compared.
+- Sample data grows to 10 customers and 25 orders (Build 01's originals unchanged), with a cancelled
+  status and a new `list_orders` tool.
 - CI workflow: typecheck, tests, build, and a check that no SDK code ships in the bundle.
